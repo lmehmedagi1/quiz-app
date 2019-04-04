@@ -1,7 +1,9 @@
-package ba.unsa.etf.rma;
+package ba.unsa.etf.rma.aktivnosti;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+
+import ba.unsa.etf.rma.R;
 
 public class MainActivity extends AppCompatActivity {
 
