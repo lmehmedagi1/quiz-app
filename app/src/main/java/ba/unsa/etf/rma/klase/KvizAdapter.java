@@ -14,7 +14,7 @@ import java.util.List;
 import ba.unsa.etf.rma.R;
 
 public class KvizAdapter extends ArrayAdapter<Kviz> {
-    
+
     public KvizAdapter(Context context, List<Kviz> kvizovi) {
         super(context, R.layout.element_liste, kvizovi);
     }
@@ -33,5 +33,11 @@ public class KvizAdapter extends ArrayAdapter<Kviz> {
         ikona.setImageResource(R.drawable.item);
 
         return customView;
+    }
+
+    public View dajElementZaDodavanje(ViewGroup parent) {
+        View element = LayoutInflater.from(getContext()).inflate(R.layout.element_liste, parent, false);
+        ((TextView) element.findViewById(R.id.tekst)).setText("Dodaj kviz!");
+        return element;
     }
 }
