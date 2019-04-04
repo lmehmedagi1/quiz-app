@@ -27,7 +27,7 @@ public class KvizoviAkt extends AppCompatActivity {
     private ListView listaKvizova = (ListView) findViewById(R.id.lvKvizovi);
     private Spinner spinner = (Spinner) findViewById(R.id.spPostojeceKategorije);
 
-    private List<Kviz> kvizovi = new ArrayList<>();
+    private ArrayList<Kviz> kvizovi = new ArrayList<>();
     private ArrayList<Kategorija> kategorije = new ArrayList<>();
 
     private View elementZaDodavanje;
@@ -75,6 +75,7 @@ public class KvizoviAkt extends AppCompatActivity {
 
     private void otvoriNovuAktivnost(Kviz odabraniKviz) {
         Intent intent = new Intent(KvizoviAkt.this, DodajKvizAkt.class);
+        intent.putExtra("kvizovi", kvizovi);
         intent.putExtra("kategorije", kategorije);
         intent.putExtra("kviz", odabraniKviz);
         KvizoviAkt.this.startActivity(intent);
@@ -85,7 +86,7 @@ public class KvizoviAkt extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 String odabranaKategorija = parent.getItemAtPosition(position).toString();
 
-                List<Kviz> kvizoviIzOdabraneKategorije = new ArrayList<>();
+                ArrayList<Kviz> kvizoviIzOdabraneKategorije = new ArrayList<>();
 
                 for (Kviz k : kvizovi) {
                     if (odabranaKategorija.equals("Svi") || odabranaKategorija.equals(k.getKategorija().getNaziv()))

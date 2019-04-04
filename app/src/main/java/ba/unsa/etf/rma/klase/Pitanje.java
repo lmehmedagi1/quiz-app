@@ -55,4 +55,9 @@ public class Pitanje implements Serializable {
         Collections.shuffle(randomOdgovori);
         return randomOdgovori;
     }
+
+    @Override
+    public String toString() {
+        return getNaziv();
+    }
 }

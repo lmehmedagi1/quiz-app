@@ -6,24 +6,23 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import java.util.List;
+import java.util.ArrayList;
 
 import ba.unsa.etf.rma.R;
 
 public class KvizAdapter extends ArrayAdapter<Kviz> {
 
-    public KvizAdapter(Context context, List<Kviz> kvizovi) {
-        super(context, R.layout.element_liste, kvizovi);
+    public KvizAdapter(Context context, ArrayList<Kviz> kvizovi) {
+        super(context, R.layout.element_liste_kvizova, kvizovi);
     }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
 
         LayoutInflater inflater = LayoutInflater.from(getContext());
-        View customView = inflater.inflate(R.layout.element_liste, parent, false);
+        View customView = inflater.inflate(R.layout.element_liste_kvizova, parent, false);
 
         Kviz kviz = getItem(position);
         TextView tekst = (TextView) customView.findViewById(R.id.tekst);
@@ -36,8 +35,8 @@ public class KvizAdapter extends ArrayAdapter<Kviz> {
     }
 
     public View dajElementZaDodavanje(ViewGroup parent) {
-        View element = LayoutInflater.from(getContext()).inflate(R.layout.element_liste, parent, false);
-        ((TextView) element.findViewById(R.id.tekst)).setText("Dodaj kviz!");
+        View element = LayoutInflater.from(getContext()).inflate(R.layout.element_liste_kvizova, parent, false);
+        ((TextView) element.findViewById(R.id.tekst)).setText("Dodaj kviz");
         return element;
     }
 }
