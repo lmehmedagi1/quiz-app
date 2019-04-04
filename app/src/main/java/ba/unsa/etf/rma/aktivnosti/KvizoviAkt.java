@@ -61,16 +61,23 @@ public class KvizoviAkt extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> adapter, View v, int position, long arg3) {
                 Kviz odabraniKviz = (Kviz)adapter.getItemAtPosition(position);
-                startActivity(new Intent(KvizoviAkt.this, DodajKvizAkt.class));
+                otvoriNovuAktivnost(odabraniKviz);
             }
         });
 
         elementZaDodavanje.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(KvizoviAkt.this, DodajKvizAkt.class));
+                otvoriNovuAktivnost(null);
             }
         });
+    }
+
+    private void otvoriNovuAktivnost(Kviz odabraniKviz) {
+        Intent intent = new Intent(KvizoviAkt.this, DodajKvizAkt.class);
+        intent.putExtra("kategorije", kategorije);
+        intent.putExtra("kviz", odabraniKviz);
+        KvizoviAkt.this.startActivity(intent);
     }
 
     private void dodajListenerNaSpinner() {
