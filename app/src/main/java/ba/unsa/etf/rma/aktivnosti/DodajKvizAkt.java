@@ -205,8 +205,27 @@ public class DodajKvizAkt extends AppCompatActivity {
     }
 
     private void otvoriAktivnostZaDodavanjePitanja() {
+        Intent intent = new Intent(DodajKvizAkt.this, DodajPitanjeAkt.class);
+        intent.putExtra("listaDodanih", dodanaPitanja);
+        intent.putExtra("listaMogucih", mogucaPitanja);
+        DodajKvizAkt.this.startActivityForResult(intent, 1);
     }
 
     private void otvoriAktivnostZaDodavanjeKategorije() {
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1) {
+            if(resultCode == 1) {
+                Pitanje pitanje = (Pitanje)data.getSerializableExtra("pitanje");
+                dodajPitanje(pitanje);
+            }
+        }
+    }
+
+    private void dodajPitanje(Pitanje pitanje) {
+        dodanaPitanja.add(pitanje);
+        dodanaPitanjaAdapter.notifyDataSetChanged();
     }
 }
