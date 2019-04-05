@@ -64,8 +64,8 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
     }
 
     private void ocistiBoje() {
-        nazivKategorije.getBackground().clearColorFilter();
-        ikona.getBackground().clearColorFilter();
+        nazivKategorije.setBackgroundColor(Color.WHITE);
+        ikona.setBackgroundColor(Color.WHITE);
     }
 
     private void dodajListenerNaButtons() {

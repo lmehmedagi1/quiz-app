@@ -93,7 +93,7 @@ public class DodajKvizAkt extends AppCompatActivity {
     }
 
     private void ocistiBoje() {
-        nazivKviza.getBackground().clearColorFilter();
+        nazivKviza.setBackgroundColor(Color.WHITE);
     }
 
     private void dodajListenerNaEditText() {
@@ -113,9 +113,12 @@ public class DodajKvizAkt extends AppCompatActivity {
                 if (odabrana.equals("Dodaj kategoriju"))
                     otvoriAktivnostZaDodavanjeKategorije();
                 else odabranaKategorija = odabrana;
+
+                ocistiBoje();
             }
             public void onNothingSelected(AdapterView<?> parent) {
                 dodajKategorijuKviza();
+                ocistiBoje();
             }
         });
     }
@@ -166,18 +169,18 @@ public class DodajKvizAkt extends AppCompatActivity {
 
 
     private void dodajKviz() {
+        Intent intent = new Intent();
 
-        int resultCode = -1; // izmjena
-        if (kviz == null) resultCode = 0; // dodavanje
+        if (kviz == null) intent.putExtra("izmjena", "dodavanje");
+        else intent.putExtra("izmjena", "izmjena");
 
         kviz = new Kviz(nazivKviza.getText().toString(), dodanaPitanja, (Kategorija) spinner.getSelectedItem());
-        Intent intent = new Intent();
         intent.putExtra("kviz", kviz);
         intent.putExtra("odabraniKviz", imeOdabranogKviza);
 
         kategorije.remove(kategorije.size()-1);
         intent.putExtra("kategorije", kategorije);
-        setResult(resultCode, intent);
+        setResult(10, intent);
 
         finish();
     }
@@ -185,14 +188,14 @@ public class DodajKvizAkt extends AppCompatActivity {
     private boolean validniPodaci() {
         boolean ispravniPodaci = true;
 
-        if (nazivKviza.getText() == null || nazivKviza.length() == 0) {
-            nazivKviza.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.SRC_ATOP);
+        if (nazivKviza.getText() == null || nazivKviza.getText().toString().length() == 0) {
+            nazivKviza.setBackgroundColor(Color.RED);
             ispravniPodaci = false;
         }
         else if (!izmjena || (izmjena && !nazivKviza.getText().toString().equals(imeOdabranogKviza))) {   //ili dodavanje ili promjena trenutnog kviza
             for (Kviz k : kvizovi) {
                 if (nazivKviza.getText().equals(k.getNaziv())) {
-                    nazivKviza.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.SRC_ATOP);
+                    nazivKviza.setBackgroundColor(Color.RED);
                     ispravniPodaci = false;
                 }
             }
@@ -250,10 +253,15 @@ public class DodajKvizAkt extends AppCompatActivity {
         kategorije.add(kategorija);
         kategorije.add(new Kategorija("Dodaj kategoriju", "Dodaj kategoriju"));
         kategorijaAdapter.notifyDataSetChanged();
+
+        odabranaKategorija = kategorija.getNaziv();
     }
 
     private void dodajPitanje(Pitanje pitanje) {
         dodanaPitanja.add(pitanje);
-        dodanaPitanjaAdapter.notifyDataSetChanged();
+
+        //radilo je i bez ovog i swear
+        dodanaPitanjaAdapter = new PitanjeAdapter(this, dodanaPitanja);
+        listaDodanihPitanja.setAdapter(dodanaPitanjaAdapter);
     }
 }

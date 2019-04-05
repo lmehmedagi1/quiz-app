@@ -34,12 +34,12 @@ public class KvizAdapter extends ArrayAdapter<Kviz> {
 
         tekst.setText(kviz.getNaziv());
         if (kviz.getKategorija().getNaziv().equals("Svi")) ikona.setImageResource(R.drawable.svi_icon);
+        else if (kviz.getKategorija().getNaziv().equals("Dodaj kviz")) ikona.setImageResource(R.drawable.dodaj_icon);
         else {
             final IconHelper iconHelper = IconHelper.getInstance(getContext());
             iconHelper.addLoadCallback(new IconHelper.LoadCallback() {
                 @Override
                 public void onDataLoaded() {
-                    // This happens on UI thread, and is guaranteed to be called.
                     ikona.setImageDrawable(iconHelper.getIcon(Integer.parseInt(kviz.getKategorija().getId())).getDrawable(getContext()));
                 }
             });

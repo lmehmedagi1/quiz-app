@@ -61,7 +61,7 @@ public class DodajPitanjeAkt extends AppCompatActivity {
         
         dodajListenerNaButtons();
         dodajListenerNaListu();
-        dodajListenerNaEditTexts();
+        //dodajListenerNaEditTexts();
     }
 
     private void dodajListenerNaEditTexts() {
@@ -80,8 +80,8 @@ public class DodajPitanjeAkt extends AppCompatActivity {
     }
 
     private void ocistiBoje() {
-        pitanjeET.getBackground().clearColorFilter();
-        listaOdgovora.getBackground().clearColorFilter(); // ako ovo ne radi onda setBackgroundColor(Color.WHITE);
+        pitanjeET.setBackgroundColor(Color.WHITE);
+        listaOdgovora.setBackgroundColor(Color.WHITE); // ako ovo ne radi onda setBackgroundColor(Color.WHITE);
     }
 
     private void dodajListenerNaListu() {
@@ -168,7 +168,8 @@ public class DodajPitanjeAkt extends AppCompatActivity {
         tacan = odgovorET.getText().toString();
         dodajOdgovor();
 
-        listaOdgovora.getChildAt(odgovori.size()-1).setBackgroundColor(Color.GREEN);
+        odgovoriAdapter.getView(odgovori.size()-1, null, listaOdgovora).setBackgroundColor(Color.GREEN);
+        //listaOdgovora.getChildAt(odgovori.size()-1).setBackgroundColor(Color.GREEN);
     }
 
     private void dodajOdgovor() {
@@ -184,7 +185,7 @@ public class DodajPitanjeAkt extends AppCompatActivity {
 
     private void vratiPitanjeUPrethodnuAktivnost() {
         Pitanje pitanje = new Pitanje(pitanjeET.getText().toString(), pitanjeET.getText().toString(), odgovori, tacan);
-        
+
         Intent intent = new Intent();
         intent.putExtra("pitanje", pitanje);
         setResult(1, intent);
