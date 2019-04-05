@@ -212,6 +212,10 @@ public class DodajKvizAkt extends AppCompatActivity {
     }
 
     private void otvoriAktivnostZaDodavanjeKategorije() {
+        Intent intent = new Intent(DodajKvizAkt.this, DodajPitanjeAkt.class);
+        intent.putExtra("listaDodanih", dodanaPitanja);
+        intent.putExtra("listaMogucih", mogucaPitanja);
+        DodajKvizAkt.this.startActivityForResult(intent, 2);
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
