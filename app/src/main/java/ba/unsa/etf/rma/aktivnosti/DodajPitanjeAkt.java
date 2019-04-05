@@ -6,6 +6,7 @@ import android.graphics.PorterDuff;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -32,12 +33,15 @@ public class DodajPitanjeAkt extends AppCompatActivity {
 
     private ArrayAdapter<String> odgovoriAdapter = null;
 
-    private Pitanje pitanje = null;
+    private String tacan;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dodaj_pitanje_akt);
+
+        // da tastatura ne pomjeri layout
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
         pitanjeET = (EditText)findViewById(R.id.etNaziv);
         odgovorET = (EditText)findViewById(R.id.etOdgovor);
@@ -90,8 +94,7 @@ public class DodajPitanjeAkt extends AppCompatActivity {
                     if (odgovori.get(i).equals(odabraniOdgovor)) {
 
                         // ako je odabran tacan odgovor
-                        if (pitanje.getTacan() != null && odabraniOdgovor.equals(pitanje.getTacan()))
-                            pitanje.setTacan(null);
+                        if (tacan != null && odabraniOdgovor.equals(tacan)) tacan = null;
 
                         odgovori.remove(i);
                         odgovoriAdapter.notifyDataSetChanged();
@@ -142,7 +145,7 @@ public class DodajPitanjeAkt extends AppCompatActivity {
             ispravniPodaci = provjeriPitanjeUListi(mogucaPitanja, ispravniPodaci);
         }
 
-        if (pitanje.getTacan() == null) {
+        if (tacan == null) {
             ispravniPodaci = false;
             listaOdgovora.setBackgroundColor(Color.RED);
         }
@@ -162,7 +165,7 @@ public class DodajPitanjeAkt extends AppCompatActivity {
     }
 
     private void dodajTacanOdgovor() {
-        pitanje.setTacan(odgovorET.getText().toString());
+        tacan = odgovorET.getText().toString();
         dodajOdgovor();
 
         listaOdgovora.getChildAt(odgovori.size()-1).setBackgroundColor(Color.GREEN);
@@ -180,11 +183,8 @@ public class DodajPitanjeAkt extends AppCompatActivity {
     }
 
     private void vratiPitanjeUPrethodnuAktivnost() {
-        pitanje.setOdgovori(odgovori);
-        pitanje.setNaziv(pitanjeET.getText().toString());
-        pitanje.setTekstPitanja(pitanjeET.getText().toString());
-        // tacan odgovor je vec dodan
-
+        Pitanje pitanje = new Pitanje(pitanjeET.getText().toString(), pitanjeET.getText().toString(), odgovori, tacan);
+        
         Intent intent = new Intent();
         intent.putExtra("pitanje", pitanje);
         setResult(1, intent);

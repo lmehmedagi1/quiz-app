@@ -41,7 +41,7 @@ public class KvizoviAkt extends AppCompatActivity {
         spinner = (Spinner) findViewById(R.id.spPostojeceKategorije);
 
         dodajKategorije();
-        dodajKvizove();
+        //dodajKvizove();
 
         kategorijaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, kategorije);
         kategorijaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -81,7 +81,7 @@ public class KvizoviAkt extends AppCompatActivity {
         intent.putExtra("kvizovi", kvizovi);
         intent.putExtra("kategorije", kategorije);
         intent.putExtra("kviz", odabraniKviz);
-        KvizoviAkt.this.startActivity(intent);
+        KvizoviAkt.this.startActivityForResult(intent, 0);
     }
 
     private void dodajListenerNaSpinner() {
@@ -106,10 +106,10 @@ public class KvizoviAkt extends AppCompatActivity {
     }
 
     public void dodajKategorije() {
-        kategorije.add(new Kategorija("Svi", "sviId"));
-        kategorije.add(new Kategorija("Sport", "sportId"));
-        kategorije.add(new Kategorija("Umjetnost", "umjetnostId"));
-        kategorije.add(new Kategorija("Nauka", "naukaId"));
+        kategorije.add(new Kategorija("Svi", "-1"));
+        //kategorije.add(new Kategorija("Sport", "sportId"));
+        //kategorije.add(new Kategorija("Umjetnost", "umjetnostId"));
+        //kategorije.add(new Kategorija("Nauka", "naukaId"));
     }
 
     public void dodajKvizove() {
@@ -123,7 +123,37 @@ public class KvizoviAkt extends AppCompatActivity {
         kvizovi.add(new Kviz("Kviz 1", pitanja, kategorije.get(0)));
     }
 
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 0) {
 
+            Kviz kviz = null;
 
+            if (resultCode == 0 || resultCode == -1) {
+                kviz = (Kviz) data.getSerializableExtra("kviz");
+                kategorije = (ArrayList<Kategorija>) data.getSerializableExtra("kategorije");
+                kategorijaAdapter.notifyDataSetChanged();
+            }
 
+            if(resultCode == 0) { // izmjena
+                String nazivIzmijenjenog = data.getStringExtra("odabraniKviz");
+
+                for (int i = 0; i<kvizovi.size(); i++) {
+                    if (kvizovi.get(i).getNaziv().equals(nazivIzmijenjenog)) {
+                        kvizovi.set(i, kviz);
+                        kvizAdapter.notifyDataSetChanged();
+                        return;
+                    }
+                }
+            }
+            else if (resultCode == -1) { // dodavanje
+                dodajKviz(kviz);
+            }
+        }
+    }
+
+    private void dodajKviz(Kviz kviz) {
+        kvizovi.add(kviz);
+        kvizAdapter.notifyDataSetChanged();
+    }
 }
