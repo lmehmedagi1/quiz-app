@@ -24,8 +24,8 @@ public class KvizoviAkt extends AppCompatActivity {
     private KvizAdapter kvizAdapter = null;
     private ArrayAdapter<Kategorija> kategorijaAdapter = null;
 
-    private ListView listaKvizova = (ListView) findViewById(R.id.lvKvizovi);
-    private Spinner spinner = (Spinner) findViewById(R.id.spPostojeceKategorije);
+    private ListView listaKvizova;
+    private Spinner spinner;
 
     private ArrayList<Kviz> kvizovi = new ArrayList<>();
     private ArrayList<Kategorija> kategorije = new ArrayList<>();
@@ -36,6 +36,9 @@ public class KvizoviAkt extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_kvizovi_akt);
+
+        listaKvizova = (ListView) findViewById(R.id.lvKvizovi);
+        spinner = (Spinner) findViewById(R.id.spPostojeceKategorije);
 
         dodajKategorije();
         dodajKvizove();
