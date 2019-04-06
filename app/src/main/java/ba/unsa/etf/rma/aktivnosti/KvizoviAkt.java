@@ -115,6 +115,7 @@ public class KvizoviAkt extends AppCompatActivity {
                         if (kvizovi.get(i).getNaziv().equals(nazivIzmijenjenog)) {
                             kvizovi.set(i, kviz);
                             kvizAdapter.notifyDataSetChanged();
+                            refreshList();
                             return;
                         }
                     }

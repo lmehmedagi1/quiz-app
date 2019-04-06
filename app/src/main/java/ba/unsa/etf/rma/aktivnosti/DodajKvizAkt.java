@@ -1,6 +1,7 @@
 package ba.unsa.etf.rma.aktivnosti;
 
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.support.v7.app.AppCompatActivity;
@@ -44,6 +45,7 @@ public class DodajKvizAkt extends AppCompatActivity {
 
     private View elementZaDodavanje;
     private String odabranaKategorija;
+    private int trenutnaKategorija;
 
     private boolean izmjena = false;
     private String imeOdabranogKviza;
@@ -69,6 +71,8 @@ public class DodajKvizAkt extends AppCompatActivity {
         kategorije = (ArrayList<Kategorija>)intent.getSerializableExtra("kategorije");
         kategorije.add(new Kategorija("Dodaj kategoriju", "Dodaj kategoriju"));
 
+        dodajDodanaPitanja();
+
         kategorijaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, kategorije);
         kategorijaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
@@ -78,7 +82,6 @@ public class DodajKvizAkt extends AppCompatActivity {
         elementZaDodavanje = dodanaPitanjaAdapter.dajElementZaDodavanje(listaDodanihPitanja);
         listaDodanihPitanja.addFooterView(elementZaDodavanje);
 
-        dodajDodanaPitanja();
         dodajNazivKviza();
         dodajKategorijuKviza();
 
@@ -112,8 +115,10 @@ public class DodajKvizAkt extends AppCompatActivity {
 
                 if (odabrana.equals("Dodaj kategoriju"))
                     otvoriAktivnostZaDodavanjeKategorije();
-                else odabranaKategorija = odabrana;
-
+                else {
+                    odabranaKategorija = odabrana;
+                    trenutnaKategorija = position;
+                }
                 ocistiBoje();
             }
             public void onNothingSelected(AdapterView<?> parent) {
@@ -149,11 +154,14 @@ public class DodajKvizAkt extends AppCompatActivity {
     private void dodajKategorijuKviza() {
         if (kviz != null) {
             for (int i = 0; i<kategorije.size(); i++)
-                if (kategorije.get(i).getId().equals(kviz.getKategorija().getId())) {
+                if (kategorije.get(i).getNaziv().equals(kviz.getKategorija().getNaziv())) {
                     spinner.setSelection(i);
                     kategorijaAdapter.notifyDataSetChanged();
+                    trenutnaKategorija = i;
                 }
         }
+        else
+            trenutnaKategorija = 0;
     }
     private void dodajNazivKviza() {
         if (kviz != null) {
@@ -164,7 +172,7 @@ public class DodajKvizAkt extends AppCompatActivity {
     }
     private void dodajDodanaPitanja() {
         if (kviz != null)
-            dodanaPitanja = kviz.getPitanja();
+            dodanaPitanja.addAll(kviz.getPitanja());
     }
 
 
@@ -245,6 +253,8 @@ public class DodajKvizAkt extends AppCompatActivity {
                 Kategorija kategorija = (Kategorija) data.getSerializableExtra("kategorija");
                 dodajKategoriju(kategorija);
             }
+            else
+                spinner.setSelection(0);
         }
     }
 
@@ -264,4 +274,5 @@ public class DodajKvizAkt extends AppCompatActivity {
         dodanaPitanjaAdapter = new PitanjeAdapter(this, dodanaPitanja);
         listaDodanihPitanja.setAdapter(dodanaPitanjaAdapter);
     }
+
 }

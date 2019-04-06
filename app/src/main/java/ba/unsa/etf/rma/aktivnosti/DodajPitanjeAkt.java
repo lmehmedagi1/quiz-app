@@ -6,6 +6,7 @@ import android.graphics.PorterDuff;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -57,11 +58,25 @@ public class DodajPitanjeAkt extends AppCompatActivity {
 
         odgovoriAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, odgovori);
 
+        odgovoriAdapter = (new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, odgovori) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View row = super.getView(position, convertView, parent);
+
+                if (tacan != null && getItem(position).equals(tacan))
+                    row.setBackgroundColor(Color.GREEN);
+                else
+                    row.setBackgroundColor(0);
+
+                return row;
+            }
+        });
+
         listaOdgovora.setAdapter(odgovoriAdapter);
         
         dodajListenerNaButtons();
         dodajListenerNaListu();
-        //dodajListenerNaEditTexts();
+        dodajListenerNaEditTexts();
     }
 
     private void dodajListenerNaEditTexts() {
@@ -81,7 +96,7 @@ public class DodajPitanjeAkt extends AppCompatActivity {
 
     private void ocistiBoje() {
         pitanjeET.setBackgroundColor(Color.WHITE);
-        listaOdgovora.setBackgroundColor(Color.WHITE); // ako ovo ne radi onda setBackgroundColor(Color.WHITE);
+        odgovorET.setBackgroundColor(Color.WHITE);
     }
 
     private void dodajListenerNaListu() {
@@ -94,13 +109,15 @@ public class DodajPitanjeAkt extends AppCompatActivity {
                     if (odgovori.get(i).equals(odabraniOdgovor)) {
 
                         // ako je odabran tacan odgovor
-                        if (tacan != null && odabraniOdgovor.equals(tacan)) tacan = null;
+                        if (tacan != null && odabraniOdgovor.equals(tacan)) {
+                            tacan = null;
+                            dodajTacanButton.setEnabled(true);
+                        }
 
                         odgovori.remove(i);
                         odgovoriAdapter.notifyDataSetChanged();
                     }
                 }
-                ocistiBoje();
             }
         });
     }
@@ -147,7 +164,7 @@ public class DodajPitanjeAkt extends AppCompatActivity {
 
         if (tacan == null) {
             ispravniPodaci = false;
-            listaOdgovora.setBackgroundColor(Color.RED);
+            odgovorET.setBackgroundColor(Color.RED);
         }
 
         return ispravniPodaci;
@@ -157,7 +174,7 @@ public class DodajPitanjeAkt extends AppCompatActivity {
     private boolean provjeriPitanjeUListi(ArrayList<Pitanje> listaPitanja, boolean ispravniPodaci) {
         for (Pitanje p : listaPitanja) {
             if (p.getNaziv().equals(pitanjeET.getText().toString())) {
-                pitanjeET.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.SRC_ATOP);
+                pitanjeET.setBackgroundColor(Color.RED);
                 return false;
             }
         }
@@ -167,20 +184,27 @@ public class DodajPitanjeAkt extends AppCompatActivity {
     private void dodajTacanOdgovor() {
         tacan = odgovorET.getText().toString();
         dodajOdgovor();
-
-        odgovoriAdapter.getView(odgovori.size()-1, null, listaOdgovora).setBackgroundColor(Color.GREEN);
-        //listaOdgovora.getChildAt(odgovori.size()-1).setBackgroundColor(Color.GREEN);
+        dodajTacanButton.setEnabled(false);
     }
 
     private void dodajOdgovor() {
         odgovori.add(odgovorET.getText().toString());
         odgovoriAdapter.notifyDataSetChanged();
-
         odgovorET.setText("");
     }
 
     private boolean validanOdgovor() {
-        return (odgovorET.getText() != null && odgovorET.getText().toString().length() != 0);
+        if (odgovorET.getText() == null || odgovorET.getText().toString().length() == 0) {
+            odgovorET.setText("");
+            return false;
+        }
+        for (String odgovor : odgovori) {
+            if (odgovor.equals(odgovorET.getText().toString())) {
+                odgovorET.setText("");
+                return false;
+            }
+        }
+        return true;
     }
 
     private void vratiPitanjeUPrethodnuAktivnost() {
