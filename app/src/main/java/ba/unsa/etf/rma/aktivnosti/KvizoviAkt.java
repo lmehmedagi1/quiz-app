@@ -123,6 +123,12 @@ public class KvizoviAkt extends AppCompatActivity {
                 else
                     dodajKviz(kviz);
             }
+            else if (resultCode == 11) {
+                ArrayList<Kategorija> noveKategorije = (ArrayList<Kategorija>) data.getSerializableExtra("kategorije");
+                kategorije.clear();
+                kategorije.addAll(noveKategorije);
+                kategorijaAdapter.notifyDataSetChanged();
+            }
         }
     }
 

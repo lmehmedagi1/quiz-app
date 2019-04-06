@@ -82,12 +82,12 @@ public class DodajKvizAkt extends AppCompatActivity {
         elementZaDodavanje = dodanaPitanjaAdapter.dajElementZaDodavanje(listaDodanihPitanja);
         listaDodanihPitanja.addFooterView(elementZaDodavanje);
 
-        dodajNazivKviza();
-        dodajKategorijuKviza();
-
         spinner.setAdapter(kategorijaAdapter);
         listaDodanihPitanja.setAdapter(dodanaPitanjaAdapter);
         listaMogucihPitanja.setAdapter(mogucaPitanjaAdapter);
+
+        dodajNazivKviza();
+        dodajKategorijuKviza();
 
         dodajListenerNaListe();
         dodajListenerNaButton();
@@ -96,7 +96,7 @@ public class DodajKvizAkt extends AppCompatActivity {
     }
 
     private void ocistiBoje() {
-        nazivKviza.setBackgroundColor(Color.WHITE);
+        nazivKviza.setBackgroundColor(0);
     }
 
     private void dodajListenerNaEditText() {
@@ -202,7 +202,7 @@ public class DodajKvizAkt extends AppCompatActivity {
         }
         else if (!izmjena || (izmjena && !nazivKviza.getText().toString().equals(imeOdabranogKviza))) {   //ili dodavanje ili promjena trenutnog kviza
             for (Kviz k : kvizovi) {
-                if (nazivKviza.getText().equals(k.getNaziv())) {
+                if (nazivKviza.getText().toString().equals(k.getNaziv())) {
                     nazivKviza.setBackgroundColor(Color.RED);
                     ispravniPodaci = false;
                 }
@@ -273,6 +273,18 @@ public class DodajKvizAkt extends AppCompatActivity {
         //radilo je i bez ovog i swear
         dodanaPitanjaAdapter = new PitanjeAdapter(this, dodanaPitanja);
         listaDodanihPitanja.setAdapter(dodanaPitanjaAdapter);
+    }
+
+    @Override
+    public void onBackPressed() {
+
+        Intent intent = new Intent();
+
+        kategorije.remove(kategorije.size()-1);
+        intent.putExtra("kategorije", kategorije);
+        setResult(11, intent);
+
+        finish();
     }
 
 }

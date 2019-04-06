@@ -95,8 +95,8 @@ public class DodajPitanjeAkt extends AppCompatActivity {
     }
 
     private void ocistiBoje() {
-        pitanjeET.setBackgroundColor(Color.WHITE);
-        odgovorET.setBackgroundColor(Color.WHITE);
+        odgovorET.setBackgroundColor(0);
+        pitanjeET.setBackgroundColor(0);
     }
 
     private void dodajListenerNaListu() {
@@ -154,7 +154,7 @@ public class DodajPitanjeAkt extends AppCompatActivity {
         String nazivPitanja = pitanjeET.getText().toString();
 
         if (nazivPitanja == null || nazivPitanja.length() == 0) {
-            pitanjeET.getBackground().setColorFilter(Color.RED, PorterDuff.Mode.SRC_ATOP);
+            pitanjeET.setBackgroundColor(Color.RED);
             ispravniPodaci = false;
         }
         else {
