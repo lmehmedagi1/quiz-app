@@ -314,8 +314,10 @@ public class DodajKvizAkt extends AppCompatActivity {
         ArrayList<Pitanje> pitanjaZaImportovaniKviz = new ArrayList<>();
 
 
-        if (importData == null || importData.size()==0)
+        if (importData == null || importData.size()==0) {
             izbaciAlert("Datoteka kviza kojeg importujete nema ispravan format!");
+            return;
+        }
 
         String prviRed = importData.get(0);
 
@@ -331,12 +333,16 @@ public class DodajKvizAkt extends AppCompatActivity {
             i++;
         }
 
-        if (i != 3)
+        if (i != 3) {
             izbaciAlert("Datoteka kviza kojeg importujete nema ispravan format!");
+            return;
+        }
 
         for (Kviz k : kvizovi) {
-            if (k.getNaziv().equals(naziv))
+            if (k.getNaziv().equals(naziv)) {
                 izbaciAlert("Kviz kojeg importujete već postoji!");
+                return;
+            }
         }
 
         for (Kategorija k : kategorije) {
@@ -350,16 +356,20 @@ public class DodajKvizAkt extends AppCompatActivity {
         }
 
 
-        if (brojPitanja != importData.size()-1)
+        if (brojPitanja != importData.size()-1) {
             izbaciAlert("Kviz kojeg imporujete ima neispravan broj pitanja!");
+            return;
+        }
 
 
 
         for (int j = 1; j<importData.size(); j++) {
             String pitanjeInfo = importData.get(j);
 
-            if (pitanjeInfo == null || pitanjeInfo.length() == 0)
+            if (pitanjeInfo == null || pitanjeInfo.length() == 0) {
                 izbaciAlert("Datoteka kviza kojeg importujete nema ispravan format!");
+                return;
+            }
 
             StringTokenizer tokenizerPitanja = new StringTokenizer(pitanjeInfo, ",");
             int k = 0;
@@ -377,8 +387,10 @@ public class DodajKvizAkt extends AppCompatActivity {
                     String odgovor = tokenizerPitanja.nextToken();
 
                     for (String o : odgovori) {
-                        if (odgovor.equals(o))
+                        if (odgovor.equals(o)) {
                             izbaciAlert("Kviz kojeg importujete nije ispravan postoji ponavljanje odgovora!");
+                            return;
+                        }
                     }
 
                     odgovori.add(odgovor);
@@ -388,15 +400,21 @@ public class DodajKvizAkt extends AppCompatActivity {
             }
 
             for (Pitanje p : pitanjaZaImportovaniKviz) {
-                if (p.getNaziv().equals(nazivPitanja))
+                if (p.getNaziv().equals(nazivPitanja)) {
                     izbaciAlert("Kviz nije ispravan postoje dva pitanja sa istim nazivom!");
+                    return;
+                }
             }
 
-            if (brojOdgovora != odgovori.size() || brojOdgovora == 0)
+            if (brojOdgovora != odgovori.size() || brojOdgovora == 0) {
                 izbaciAlert("Kviz kojeg importujete ima neispravan broj odgovora!");
+                return;
+            }
 
-            if (indeksTacnog<0 || indeksTacnog>=odgovori.size())
+            if (indeksTacnog<0 || indeksTacnog>=odgovori.size()) {
                 izbaciAlert("Kviz kojeg importujete ima neispravan index tačnog odgovora!");
+                return;
+            }
 
             pitanjaZaImportovaniKviz.add(new Pitanje(nazivPitanja, nazivPitanja, odgovori, odgovori.get(indeksTacnog)));
         }
