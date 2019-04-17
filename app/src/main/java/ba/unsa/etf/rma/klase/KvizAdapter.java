@@ -33,7 +33,7 @@ public class KvizAdapter extends ArrayAdapter<Kviz> {
 
 
         tekst.setText(kviz.getNaziv());
-        if (kviz.getKategorija().getNaziv().equals("Svi")) ikona.setImageResource(R.drawable.svi_icon);
+        if (kviz.getKategorija().getNaziv().equals("Svi") || kviz.getKategorija().getId()=="-1") ikona.setImageResource(R.drawable.svi_icon);
         else if (kviz.getKategorija().getNaziv().equals("Dodaj kviz")) ikona.setImageResource(R.drawable.dodaj_icon);
         else {
             final IconHelper iconHelper = IconHelper.getInstance(getContext());

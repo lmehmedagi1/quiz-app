@@ -1,11 +1,15 @@
 package ba.unsa.etf.rma.aktivnosti;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
@@ -15,8 +19,14 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.klase.Kategorija;
@@ -32,6 +42,7 @@ public class DodajKvizAkt extends AppCompatActivity {
     private Button dodajKvizButton;
     private EditText nazivKviza;
     private Spinner spinner;
+    private Button importButton;
 
     private Kviz kviz = null;
     private ArrayList<Kategorija> kategorije = new ArrayList<>();
@@ -63,6 +74,7 @@ public class DodajKvizAkt extends AppCompatActivity {
         dodajKvizButton = (Button) findViewById(R.id.btnDodajKviz);
         nazivKviza = (EditText) findViewById(R.id.etNaziv);
         spinner = (Spinner) findViewById(R.id.spKategorije);
+        importButton = (Button) findViewById(R.id.btnImportKviz);
 
         Intent intent = getIntent();
 
@@ -134,6 +146,26 @@ public class DodajKvizAkt extends AppCompatActivity {
             public void onClick(View v) {
                 if (!validniPodaci()) return;
                 dodajKviz();
+            }
+        });
+        importButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // ACTION_OPEN_DOCUMENT is the intent to choose a file via the system's file
+                // browser.
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+
+                // Filter to only show results that can be "opened", such as a
+                // file (as opposed to a list of contacts or timezones)
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+
+                // Filter to show only images, using the image MIME data type.
+                // If one wanted to search for ogg vorbis files, the type would be "audio/ogg".
+                // To search for all documents available via installed storage providers,
+                // it would be "*/*".
+                intent.setType("text/plain");
+
+                startActivityForResult(intent, 42);
             }
         });
     }
@@ -256,7 +288,152 @@ public class DodajKvizAkt extends AppCompatActivity {
             else
                 spinner.setSelection(0);
         }
+        else if (requestCode == 42  && resultCode == Activity.RESULT_OK) {
+            // The document selected by the user won't be returned in the intent.
+            // Instead, a URI to that document will be contained in the return intent
+            // provided to this method as a parameter.
+            // Pull that URI using resultData.getData().
+            Uri uri = null;
+            if (data != null) {
+                uri = data.getData();
+                try {
+                    ArrayList<String> importData = readTextFromUri(uri);
+                    dodajImportovaniKviz(importData);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }
     }
+
+    private void dodajImportovaniKviz(ArrayList<String> importData) {
+
+        String naziv = "";
+        Kategorija kategorija = null;
+        ArrayList<Pitanje> pitanjaZaImportovaniKviz = new ArrayList<>();
+
+
+        if (importData == null || importData.size()==0)
+            izbaciAlert("Datoteka kviza kojeg importujete nema ispravan format!");
+
+        String prviRed = importData.get(0);
+
+        StringTokenizer tokenizer = new StringTokenizer(prviRed, ",");
+        int i = 0;
+        String nazivKategorije = "";
+        int brojPitanja = -1;
+
+        while (tokenizer.hasMoreTokens()) {
+            if (i == 0) naziv = tokenizer.nextToken();
+            if (i == 1) nazivKategorije = tokenizer.nextToken();
+            if (i == 2) brojPitanja = Integer.parseInt(tokenizer.nextToken());
+            i++;
+        }
+
+        if (i != 3)
+            izbaciAlert("Datoteka kviza kojeg importujete nema ispravan format!");
+
+        for (Kviz k : kvizovi) {
+            if (k.getNaziv().equals(naziv))
+                izbaciAlert("Kviz kojeg importujete već postoji!");
+        }
+
+        for (Kategorija k : kategorije) {
+            if (k.getNaziv().equals(nazivKategorije)) {
+                kategorija = k;
+            }
+        }
+        // ako ne postoji vec dodajemo je sa icon id -1
+        if (kategorija == null) {
+            kategorija = new Kategorija(nazivKategorije, "-1");
+        }
+
+
+        if (brojPitanja != importData.size()-1)
+            izbaciAlert("Kviz kojeg imporujete ima neispravan broj pitanja!");
+
+
+
+        for (int j = 1; j<importData.size(); j++) {
+            String pitanjeInfo = importData.get(j);
+
+            if (pitanjeInfo == null || pitanjeInfo.length() == 0)
+                izbaciAlert("Datoteka kviza kojeg importujete nema ispravan format!");
+
+            StringTokenizer tokenizerPitanja = new StringTokenizer(pitanjeInfo, ",");
+            int k = 0;
+            String nazivPitanja = "";
+            int brojOdgovora = -1, indeksTacnog = -1;
+
+            ArrayList<String> odgovori = new ArrayList<>();
+
+            while (tokenizerPitanja.hasMoreTokens()) {
+                if (k == 0) nazivPitanja = tokenizerPitanja.nextToken();
+                if (k == 1) brojOdgovora = Integer.parseInt(tokenizerPitanja.nextToken());
+                if (k == 2) indeksTacnog = Integer.parseInt(tokenizerPitanja.nextToken());
+
+                if (k>2) {
+                    String odgovor = tokenizerPitanja.nextToken();
+
+                    for (String o : odgovori) {
+                        if (odgovor.equals(o))
+                            izbaciAlert("Kviz kojeg importujete nije ispravan postoji ponavljanje odgovora!");
+                    }
+
+                    odgovori.add(odgovor);
+                }
+
+                k++;
+            }
+
+            for (Pitanje p : pitanjaZaImportovaniKviz) {
+                if (p.getNaziv().equals(nazivPitanja))
+                    izbaciAlert("Kviz nije ispravan postoje dva pitanja sa istim nazivom!");
+            }
+
+            if (brojOdgovora != odgovori.size() || brojOdgovora == 0)
+                izbaciAlert("Kviz kojeg importujete ima neispravan broj odgovora!");
+
+            if (indeksTacnog<0 || indeksTacnog>=odgovori.size())
+                izbaciAlert("Kviz kojeg importujete ima neispravan index tačnog odgovora!");
+
+            pitanjaZaImportovaniKviz.add(new Pitanje(nazivPitanja, nazivPitanja, odgovori, odgovori.get(indeksTacnog)));
+        }
+
+
+        nazivKviza.setText(naziv);
+        dodajKategoriju(kategorija);
+
+        // sta se treba desiti sa starim pitanjima i sa mogucim
+        dodanaPitanja.addAll(pitanjaZaImportovaniKviz);
+
+        //radilo je i bez ovog i swear
+        dodanaPitanjaAdapter = new PitanjeAdapter(this, dodanaPitanja);
+        listaDodanihPitanja.setAdapter(dodanaPitanjaAdapter);
+    }
+
+    private void izbaciAlert(String poruka) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(poruka);
+        builder.create().show();
+    }
+
+    private ArrayList<String> readTextFromUri(Uri uri) throws IOException {
+        InputStream inputStream = getContentResolver().openInputStream(uri);
+        if (inputStream == null) return null;
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+
+        ArrayList<String> importData = new ArrayList<>();
+
+        String line;
+        while ((line = reader.readLine()) != null) {
+            importData.add(line);
+        }
+        inputStream.close();
+        return importData;
+    }
+
 
     private void dodajKategoriju(Kategorija kategorija) {
         kategorije.remove(kategorije.size()-1);
