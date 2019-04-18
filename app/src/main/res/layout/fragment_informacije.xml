@@ -24,7 +24,7 @@
         tools:hint="Naziv kviza" />
 
     <TextView
-        android:id="@+id/ infBrojTacnihPitanj"
+        android:id="@+id/infBrojTacnihPitanja"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
@@ -57,7 +57,7 @@
         tools:hint="Procenat" />
 
     <TextView
-        android:id="@+id/  infBrojPreostalihPitanja"
+        android:id="@+id/infBrojPreostalihPitanja"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
@@ -140,7 +140,7 @@
         app:layout_constraintTop_toTopOf="@+id/guideline16" />
 
     <Button
-        android:id="@+id/ btnKraj"
+        android:id="@+id/btnKraj"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
