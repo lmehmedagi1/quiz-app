@@ -19,17 +19,23 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
     private static final String INFO_TAG = "info";
     private static final String PITANJE_TAG = "pitanje";
 
+    private Kviz kviz = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_igraj_kviz_akt);
 
-        Kviz kviz = null;
         Intent intent = getIntent();
         kviz = (Kviz)intent.getSerializableExtra("kviz");
 
         FragmentManager manager = getSupportFragmentManager();
 
+        pitanjeFrag = (PitanjeFrag) manager.findFragmentByTag(PITANJE_TAG);
+        if (pitanjeFrag == null) {
+            pitanjeFrag = new PitanjeFrag();
+            manager.beginTransaction().add(R.id.pitanjePlace, pitanjeFrag, PITANJE_TAG).commit();
+        }
 
         informacijeFrag = (InformacijeFrag) manager.findFragmentByTag(INFO_TAG);
         if (informacijeFrag == null) {
@@ -40,13 +46,6 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
             informacijeFrag.setArguments(bundle);
 
             manager.beginTransaction().add(R.id.informacijePlace, informacijeFrag, INFO_TAG).commit();
-        }
-
-
-        pitanjeFrag = (PitanjeFrag) manager.findFragmentByTag(PITANJE_TAG);
-        if (pitanjeFrag == null) {
-            pitanjeFrag = new PitanjeFrag();
-            manager.beginTransaction().add(R.id.pitanjePlace, pitanjeFrag, PITANJE_TAG).commit();
         }
 
     }
@@ -60,5 +59,9 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
     @Override
     public void porukaOdPitanja(boolean tacanOdgovor) {
        informacijeFrag.primiPorukuOdPitanjaFragment(tacanOdgovor);
+    }
+
+    public Kviz dajKviz() {
+        return kviz;
     }
 }

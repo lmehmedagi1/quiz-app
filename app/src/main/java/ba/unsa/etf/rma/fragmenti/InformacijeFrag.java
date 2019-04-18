@@ -3,6 +3,7 @@ package ba.unsa.etf.rma.fragmenti;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,10 +11,15 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import ba.unsa.etf.rma.R;
+import ba.unsa.etf.rma.aktivnosti.IgrajKvizAkt;
 import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.klase.Pitanje;
 
@@ -44,13 +50,16 @@ public class InformacijeFrag extends Fragment {
         // Required empty public constructor
     }
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (kviz == null)
+            kviz = ((IgrajKvizAkt) getActivity()).dajKviz();
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_informacije, container, false);
-
-        Bundle args = getArguments();
-        kviz = (Kviz) args.getSerializable("kviz"); // ovo ce mozda morat u on create
 
         nazivKvizaTV = (TextView) v.findViewById(R.id.infNazivKviza);
         brojTacnihPitanjaTV = (TextView) v.findViewById(R.id.infBrojTacnihPitanja);
@@ -60,14 +69,19 @@ public class InformacijeFrag extends Fragment {
 
         nazivKvizaTV.setText(kviz.getNaziv());
         brojTacnihPitanjaTV.setText("0");
-        brojPreostalihPitanjaTV.setText(kviz.getPitanja().size());
+        int brojPreostalih = 0;
+        if (kviz != null)
+            brojPreostalih = kviz.getPitanja().size();
+
+        brojPreostalihPitanjaTV.setText(String.valueOf(brojPreostalih));
         procenatTacniTV.setText("0%");
 
-        preostalaPitanja.addAll(kviz.getPitanja());
+        if (kviz != null) preostalaPitanja.addAll(kviz.getPitanja());
 
         // šaljemo prvo pitanje
         trenutnoPitanje = dajRandomPitanje();
-        callback.porukaOdInformacija(trenutnoPitanje);
+        if (trenutnoPitanje != null)
+            callback.porukaOdInformacija(trenutnoPitanje);
 
         dodajListenerNaButton();
         return v;
@@ -94,6 +108,27 @@ public class InformacijeFrag extends Fragment {
     }
 
 
+
+    public void primiPorukuOdPitanjaFragment(boolean tacanOdgovor) {
+        if (tacanOdgovor) brojTacnih++;
+
+        double procenat = 0;
+        if (postavljenaPitanja.size() != 0) procenat = ((double)brojTacnih)/(postavljenaPitanja.size());
+
+        NumberFormat format = NumberFormat.getPercentInstance(Locale.US);
+        String percentage = format.format(procenat);
+
+        brojTacnihPitanjaTV.setText(String.valueOf(brojTacnih));
+        brojPreostalihPitanjaTV.setText(String.valueOf(preostalaPitanja.size()));
+        procenatTacniTV.setText(percentage);
+
+
+        trenutnoPitanje = dajRandomPitanje();
+        if (trenutnoPitanje != null)
+            callback.porukaOdInformacija(trenutnoPitanje);
+    }
+
+
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -101,17 +136,9 @@ public class InformacijeFrag extends Fragment {
         if (context instanceof porukaOdInformacija)
             callback = (porukaOdInformacija) context;
     }
-
     @Override
     public void onDetach() {
         super.onDetach();
         callback = null;
-    }
-
-
-    public void primiPorukuOdPitanjaFragment(boolean tacanOdgovor) {
-        if (tacanOdgovor) brojTacnih++;
-
-        //azurirati podatke i poslat novo pitanje za 2s
     }
 }
