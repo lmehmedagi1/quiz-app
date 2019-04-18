@@ -63,7 +63,7 @@ public class KvizoviAkt extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> adapter, View v, int position, long arg3) {
                 Kviz odabraniKviz = (Kviz)adapter.getItemAtPosition(position);
-                otvoriNovuAktivnost(odabraniKviz);
+                otvoriAktivnostZaIgranjeKviza(odabraniKviz);
             }
         });
 
@@ -73,6 +73,29 @@ public class KvizoviAkt extends AppCompatActivity {
                 otvoriNovuAktivnost(null);
             }
         });
+
+        elementZaDodavanje.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                otvoriNovuAktivnost(null);
+                return true;
+            }
+        });
+
+        listaKvizova.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapter, View arg1, int position, long id) {
+                Kviz odabraniKviz = (Kviz)adapter.getItemAtPosition(position);
+                otvoriNovuAktivnost(odabraniKviz);
+                return true;
+            }
+        });
+    }
+
+    private void otvoriAktivnostZaIgranjeKviza(Kviz odabraniKviz) {
+        Intent intent = new Intent(KvizoviAkt.this, IgrajKvizAkt.class);
+        intent.putExtra("kviz", odabraniKviz);
+        KvizoviAkt.this.startActivityForResult(intent, 20);
     }
 
     private void otvoriNovuAktivnost(Kviz odabraniKviz) {

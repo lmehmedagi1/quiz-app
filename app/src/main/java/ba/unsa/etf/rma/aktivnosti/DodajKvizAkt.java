@@ -424,6 +424,7 @@ public class DodajKvizAkt extends AppCompatActivity {
         dodajKategoriju(kategorija);
 
         // sta se treba desiti sa starim pitanjima i sa mogucim
+        dodanaPitanja.clear();
         dodanaPitanja.addAll(pitanjaZaImportovaniKviz);
 
         //radilo je i bez ovog i swear
