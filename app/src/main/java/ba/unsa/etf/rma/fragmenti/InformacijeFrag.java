@@ -27,6 +27,7 @@ public class InformacijeFrag extends Fragment {
 
     public interface porukaOdInformacija {
         void porukaOdInformacija (Pitanje pitanje);
+        void porukaOZadnjemPitanju();
     }
 
     private porukaOdInformacija callback;
@@ -61,6 +62,8 @@ public class InformacijeFrag extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_informacije, container, false);
 
+        brojTacnih = 0;
+
         nazivKvizaTV = (TextView) v.findViewById(R.id.infNazivKviza);
         brojTacnihPitanjaTV = (TextView) v.findViewById(R.id.infBrojTacnihPitanja);
         brojPreostalihPitanjaTV = (TextView) v.findViewById(R.id.infBrojPreostalihPitanja);
@@ -69,14 +72,16 @@ public class InformacijeFrag extends Fragment {
 
         nazivKvizaTV.setText(kviz.getNaziv());
         brojTacnihPitanjaTV.setText("0");
-        int brojPreostalih = 0;
-        if (kviz != null)
-            brojPreostalih = kviz.getPitanja().size();
-
-        brojPreostalihPitanjaTV.setText(String.valueOf(brojPreostalih));
         procenatTacniTV.setText("0%");
 
-        if (kviz != null) preostalaPitanja.addAll(kviz.getPitanja());
+        if (kviz != null)
+            preostalaPitanja.addAll(kviz.getPitanja());
+
+
+        if (preostalaPitanja.size() == 0)
+            brojPreostalihPitanjaTV.setText(String.valueOf(0));
+        else
+            brojPreostalihPitanjaTV.setText(String.valueOf(preostalaPitanja.size()-1));
 
         // šaljemo prvo pitanje
         trenutnoPitanje = dajRandomPitanje();
@@ -119,13 +124,20 @@ public class InformacijeFrag extends Fragment {
         String percentage = format.format(procenat);
 
         brojTacnihPitanjaTV.setText(String.valueOf(brojTacnih));
-        brojPreostalihPitanjaTV.setText(String.valueOf(preostalaPitanja.size()));
+        if (preostalaPitanja.size() == 0)
+            brojPreostalihPitanjaTV.setText(String.valueOf(preostalaPitanja.size()));
+        else
+            brojPreostalihPitanjaTV.setText(String.valueOf(preostalaPitanja.size()-1));
+
         procenatTacniTV.setText(percentage);
 
 
         trenutnoPitanje = dajRandomPitanje();
         if (trenutnoPitanje != null)
             callback.porukaOdInformacija(trenutnoPitanje);
+        else
+            callback.porukaOZadnjemPitanju();
+
     }
 
 

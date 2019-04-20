@@ -2,6 +2,7 @@ package ba.unsa.etf.rma.aktivnosti;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Color;
@@ -353,6 +354,7 @@ public class DodajKvizAkt extends AppCompatActivity {
         // ako ne postoji vec dodajemo je sa icon id -1
         if (kategorija == null) {
             kategorija = new Kategorija(nazivKategorije, "-1");
+            dodajKategoriju(kategorija);
         }
 
 
@@ -421,7 +423,8 @@ public class DodajKvizAkt extends AppCompatActivity {
 
 
         nazivKviza.setText(naziv);
-        dodajKategoriju(kategorija);
+
+        postaviKategoriju(kategorija);
 
         // sta se treba desiti sa starim pitanjima i sa mogucim
         dodanaPitanja.clear();
@@ -432,9 +435,17 @@ public class DodajKvizAkt extends AppCompatActivity {
         listaDodanihPitanja.setAdapter(dodanaPitanjaAdapter);
     }
 
+    private void postaviKategoriju(Kategorija kategorija) {
+        for (int i = 0; i<kategorije.size(); i++) {
+            if (kategorije.get(i).getNaziv().equals(kategorija.getNaziv()))
+                spinner.setSelection(i);
+        }
+    }
+
     private void izbaciAlert(String poruka) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(poruka);
+        builder.setNeutralButton("OK", null);
         builder.create().show();
     }
 

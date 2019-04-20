@@ -4,6 +4,9 @@ package ba.unsa.etf.rma.fragmenti;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,7 +38,6 @@ public class PitanjeFrag extends Fragment {
     private Pitanje pitanje = null;
 
     private boolean odabranOdgovor = false;
-    private boolean odabranTacanOdgovor = false;
     private String odabraniOdgovor = "";
 
 
@@ -53,75 +55,67 @@ public class PitanjeFrag extends Fragment {
         tekstPitanjaTV = (TextView) v.findViewById(R.id.tekstPitanja);
         listaOdgovora = (ListView) v.findViewById(R.id.odgovoriPitanja);
 
-        odgovoriAdapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_list_item_1, odgovori);
-        odgovoriAdapter = (new ArrayAdapter<String>(getContext(), android.R.layout.simple_list_item_1, odgovori) {
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                View row = super.getView(position, convertView, parent);
+        return v;
+    }
 
-                if (odabranOdgovor && pitanje != null && getItem(position).equals(odabraniOdgovor)) {
-                    if (odabranTacanOdgovor)
-                        row.setBackgroundColor(getResources().getColor(R.color.crvena));
-                    else
-                        row.setBackgroundColor(getResources().getColor(R.color.zelena));
-                }
-                if (odabranOdgovor && pitanje != null && getItem(position).equals(pitanje.getTacan()))
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        odgovoriAdapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_list_item_1, odgovori) {
+            @NonNull
+            @Override
+            public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+                View row = super.getView(position, null, parent);
+
+                if (odabranOdgovor && getItem(position).equals(pitanje.getTacan()))
                     row.setBackgroundColor(getResources().getColor(R.color.zelena));
+                else if (odabranOdgovor && getItem(position).equals(odabraniOdgovor) && !odabraniOdgovor.equals(pitanje.getTacan()))
+                    row.setBackgroundColor(getResources().getColor(R.color.crvena));
                 else
                     row.setBackgroundColor(0);
 
                 return row;
             }
-        });
+
+            @Override
+            public boolean isEnabled(int position) {
+                return !odabranOdgovor;
+            }
+        };
+
 
         listaOdgovora.setAdapter(odgovoriAdapter);
-
         dodajListenerNaListu();
-        return v;
     }
 
     private void dodajListenerNaListu() {
         listaOdgovora.setOnItemClickListener(new AdapterView.OnItemClickListener()
         {
             @Override
-            public void onItemClick(AdapterView<?> adapter, View v, int position, long arg3) {
-                String odabraniOdgovor = (String)adapter.getItemAtPosition(position);
-                for (int i=0; i<odgovori.size(); i++) {
-                    if (odgovori.get(i).equals(odabraniOdgovor)) {
+            public void onItemClick(final AdapterView<?> adapter, View v, int position, long arg3) {
+                final String odabrani = (String)adapter.getItemAtPosition(position);
 
-                        if (pitanje != null && odabraniOdgovor.equals(pitanje.getTacan())) {
-                            izabranTacanOdgovor(true, odabraniOdgovor);
-                        }
-                        else if (pitanje != null)
-                            izabranTacanOdgovor(false, odabraniOdgovor);
+                odabraniOdgovor = odabrani;
+                odabranOdgovor = true;
+
+                odgovoriAdapter.notifyDataSetChanged();
+
+
+
+                // sačekaj 2s
+                final Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.porukaOdPitanja(odabraniOdgovor.equals(pitanje.getTacan()));
                     }
-                }
+                }, 2000);
             }
         });
     }
 
-    private void izabranTacanOdgovor(boolean tacan, String odabrani) {
-        odabranTacanOdgovor = tacan;
-        odabranOdgovor = true;
-        odabraniOdgovor = odabrani;
-
-        odgovoriAdapter.notifyDataSetChanged();
-
-        // sačekaj 2s
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        callback.porukaOdPitanja(tacan);
-    }
 
     public void primiPorukuOdInformacijaFragment(Pitanje novoPitanje) {
-
-        odabranTacanOdgovor = false;
-        odabranOdgovor = false;
-        odabraniOdgovor = "";
 
         if (tekstPitanjaTV == null) return;
 
@@ -131,7 +125,17 @@ public class PitanjeFrag extends Fragment {
         odgovori.addAll(pitanje.dajRandomOdgovore());
         tekstPitanjaTV.setText(pitanje.getTekstPitanja());
 
+        odabranOdgovor = false;
+        odabraniOdgovor = "";
+
         odgovoriAdapter.notifyDataSetChanged();
+    }
+
+
+    public void primiPorukuOZadnjemPitanju() {
+        odgovori.clear();
+        odgovoriAdapter.notifyDataSetChanged();
+        tekstPitanjaTV.setText("Kviz je završen!");
     }
 
 

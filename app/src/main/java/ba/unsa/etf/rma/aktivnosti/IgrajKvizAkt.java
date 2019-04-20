@@ -57,6 +57,11 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
     }
 
     @Override
+    public void porukaOZadnjemPitanju() {
+        pitanjeFrag.primiPorukuOZadnjemPitanju();
+    }
+
+    @Override
     public void porukaOdPitanja(boolean tacanOdgovor) {
        informacijeFrag.primiPorukuOdPitanjaFragment(tacanOdgovor);
     }
