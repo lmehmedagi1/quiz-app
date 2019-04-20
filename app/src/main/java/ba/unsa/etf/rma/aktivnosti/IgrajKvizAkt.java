@@ -24,6 +24,9 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (savedInstanceState != null) return; //myb
+
         setContentView(R.layout.activity_igraj_kviz_akt);
 
         Intent intent = getIntent();
