@@ -164,7 +164,7 @@ public class DodajKvizAkt extends AppCompatActivity {
                 // If one wanted to search for ogg vorbis files, the type would be "audio/ogg".
                 // To search for all documents available via installed storage providers,
                 // it would be "*/*".
-                intent.setType("text/plain");
+                intent.setType("text/*");
 
                 startActivityForResult(intent, 42);
             }

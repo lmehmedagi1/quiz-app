@@ -1,25 +1,33 @@
 package ba.unsa.etf.rma.aktivnosti;
 
 import android.content.Intent;
+import android.icu.text.IDNA;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import ba.unsa.etf.rma.R;
+import ba.unsa.etf.rma.fragmenti.DetailFrag;
+import ba.unsa.etf.rma.fragmenti.InformacijeFrag;
+import ba.unsa.etf.rma.fragmenti.ListaFrag;
+import ba.unsa.etf.rma.fragmenti.PitanjeFrag;
 import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.klase.KvizAdapter;
 import ba.unsa.etf.rma.klase.Pitanje;
 
-public class KvizoviAkt extends AppCompatActivity {
+public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdListeFrag {
 
     private KvizAdapter kvizAdapter = null;
     private ArrayAdapter<Kategorija> kategorijaAdapter = null;
@@ -32,29 +40,73 @@ public class KvizoviAkt extends AppCompatActivity {
 
     private View elementZaDodavanje;
 
+    private static final String LISTA_TAG = "lista";
+    private static final String DETALJI_TAG = "detalji";
+
+    private ListaFrag listaFrag = null;
+    private DetailFrag detailFrag = null;
+
+    private float dpwidth = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (savedInstanceState != null) return; //myb
         setContentView(R.layout.activity_kvizovi_akt);
 
-        listaKvizova = (ListView) findViewById(R.id.lvKvizovi);
-        spinner = (Spinner) findViewById(R.id.spPostojeceKategorije);
 
-        kategorije.add(new Kategorija("Svi", "-1"));
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        dpwidth = displayMetrics.widthPixels / displayMetrics.density;
 
-        kategorijaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, kategorije);
-        kategorijaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(kategorijaAdapter);
+        if (dpwidth >= 550) {
+            FragmentManager manager = getSupportFragmentManager();
 
-        kvizAdapter = new KvizAdapter(this, kvizovi);
+            detailFrag = (DetailFrag) manager.findFragmentByTag(DETALJI_TAG);
+            if (detailFrag == null) {
+                detailFrag = new DetailFrag();
 
-        elementZaDodavanje = kvizAdapter.dajElementZaDodavanje(listaKvizova);
-        listaKvizova.addFooterView(elementZaDodavanje);
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("kvizovi", kvizovi);
+                detailFrag.setArguments(bundle);
 
-        listaKvizova.setAdapter(kvizAdapter);
+                manager.beginTransaction().add(R.id.detailPlace, detailFrag, DETALJI_TAG).commit();
+            }
 
-        dodajListenerNaSpinner();
-        dodajListenerNaListu();
+            listaFrag = (ListaFrag) manager.findFragmentByTag(LISTA_TAG);
+            if (listaFrag == null) {
+                listaFrag = new ListaFrag();
+
+                kategorije.add(new Kategorija("Svi", "-1"));
+
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("kategorije", kategorije);
+                listaFrag.setArguments(bundle);
+
+                manager.beginTransaction().add(R.id.listPlace, listaFrag, LISTA_TAG).commit();
+            }
+
+        }
+        else {
+            listaKvizova = (ListView) findViewById(R.id.lvKvizovi);
+            spinner = (Spinner) findViewById(R.id.spPostojeceKategorije);
+
+            kategorije.add(new Kategorija("Svi", "-1"));
+
+            kategorijaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, kategorije);
+            kategorijaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spinner.setAdapter(kategorijaAdapter);
+
+            kvizAdapter = new KvizAdapter(this, kvizovi);
+
+            elementZaDodavanje = kvizAdapter.dajElementZaDodavanje(listaKvizova);
+            listaKvizova.addFooterView(elementZaDodavanje);
+
+            listaKvizova.setAdapter(kvizAdapter);
+
+            dodajListenerNaSpinner();
+            dodajListenerNaListu();
+        }
     }
 
     private void dodajListenerNaListu() {
@@ -92,13 +144,13 @@ public class KvizoviAkt extends AppCompatActivity {
         });
     }
 
-    private void otvoriAktivnostZaIgranjeKviza(Kviz odabraniKviz) {
+    public void otvoriAktivnostZaIgranjeKviza(Kviz odabraniKviz) {
         Intent intent = new Intent(KvizoviAkt.this, IgrajKvizAkt.class);
         intent.putExtra("kviz", odabraniKviz);
         KvizoviAkt.this.startActivityForResult(intent, 20);
     }
 
-    private void otvoriNovuAktivnost(Kviz odabraniKviz) {
+    public void otvoriNovuAktivnost(Kviz odabraniKviz) {
         Intent intent = new Intent(KvizoviAkt.this, DodajKvizAkt.class);
         intent.putExtra("kvizovi", kvizovi);
         intent.putExtra("kategorije", kategorije);
@@ -127,7 +179,11 @@ public class KvizoviAkt extends AppCompatActivity {
                 ArrayList<Kategorija> noveKategorije = (ArrayList<Kategorija>) data.getSerializableExtra("kategorije");
                 kategorije.clear();
                 kategorije.addAll(noveKategorije);
-                kategorijaAdapter.notifyDataSetChanged();
+
+                if (dpwidth >= 550)
+                    listaFrag.azurirajKategorije(noveKategorije);
+                else
+                    kategorijaAdapter.notifyDataSetChanged();
 
                 String izmjena = data.getStringExtra("izmjena");
 
@@ -137,6 +193,11 @@ public class KvizoviAkt extends AppCompatActivity {
                     for (int i = 0; i<kvizovi.size(); i++) {
                         if (kvizovi.get(i).getNaziv().equals(nazivIzmijenjenog)) {
                             kvizovi.set(i, kviz);
+
+                            if (dpwidth >= 550) {
+                                detailFrag.azurirajKvizove(kvizovi);
+                                return;
+                            }
                             kvizAdapter.notifyDataSetChanged();
                             refreshList();
                             return;
@@ -150,13 +211,23 @@ public class KvizoviAkt extends AppCompatActivity {
                 ArrayList<Kategorija> noveKategorije = (ArrayList<Kategorija>) data.getSerializableExtra("kategorije");
                 kategorije.clear();
                 kategorije.addAll(noveKategorije);
-                kategorijaAdapter.notifyDataSetChanged();
+
+                if (dpwidth >= 550)
+                    listaFrag.azurirajKategorije(noveKategorije);
+                else
+                    kategorijaAdapter.notifyDataSetChanged();
             }
         }
     }
 
     private void dodajKviz(Kviz kviz) {
         kvizovi.add(kviz);
+
+        if (dpwidth >= 550) {
+            detailFrag.azurirajKvizove(kvizovi);
+            return;
+        }
+
         kvizAdapter.notifyDataSetChanged();
         refreshList();
     }
@@ -171,5 +242,11 @@ public class KvizoviAkt extends AppCompatActivity {
         }
         kvizAdapter = new KvizAdapter(getBaseContext(), kvizoviIzOdabraneKategorije);
         listaKvizova.setAdapter(kvizAdapter);
+    }
+
+
+    @Override
+    public void porukaOdListeFrag(String nazivKategorije) {
+        detailFrag.primiPorukuOdListeFrag(nazivKategorije);
     }
 }
