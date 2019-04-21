@@ -9,7 +9,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".aktivnosti.IgrajKvizAkt"></activity>
+        <activity android:name=".aktivnosti.IgrajKvizAkt"
+            android:configChanges="orientation|screenSize" />
         <activity
             android:name=".aktivnosti.DodajKategorijuAkt"
             android:configChanges="orientation|screenSize" />
@@ -20,8 +21,7 @@
             android:name=".aktivnosti.DodajKvizAkt"
             android:configChanges="orientation|screenSize" />
         <activity
-            android:name=".aktivnosti.KvizoviAkt"
-            android:configChanges="orientation|screenSize">
+            android:name=".aktivnosti.KvizoviAkt">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

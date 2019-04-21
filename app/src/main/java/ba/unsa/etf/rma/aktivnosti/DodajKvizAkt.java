@@ -351,11 +351,6 @@ public class DodajKvizAkt extends AppCompatActivity {
                 kategorija = k;
             }
         }
-        // ako ne postoji vec dodajemo je sa icon id -1
-        if (kategorija == null) {
-            kategorija = new Kategorija(nazivKategorije, "-1");
-            dodajKategoriju(kategorija);
-        }
 
 
         if (brojPitanja != importData.size()-1) {
@@ -423,6 +418,12 @@ public class DodajKvizAkt extends AppCompatActivity {
 
 
         nazivKviza.setText(naziv);
+
+        // ako ne postoji vec dodajemo je sa icon id -1
+        if (kategorija == null) {
+            kategorija = new Kategorija(nazivKategorije, "-1");
+            dodajKategoriju(kategorija);
+        }
 
         postaviKategoriju(kategorija);
 

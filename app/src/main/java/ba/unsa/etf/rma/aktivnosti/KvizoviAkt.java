@@ -51,7 +51,7 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (savedInstanceState != null) return; //myb
+        //if (savedInstanceState != null) return; //myb
         setContentView(R.layout.activity_kvizovi_akt);
 
 
@@ -62,6 +62,8 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         if (dpwidth >= 550) {
             FragmentManager manager = getSupportFragmentManager();
 
+            kategorije.add(new Kategorija("Svi", "-1"));
+
             detailFrag = (DetailFrag) manager.findFragmentByTag(DETALJI_TAG);
             if (detailFrag == null) {
                 detailFrag = new DetailFrag();
@@ -70,20 +72,14 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
                 bundle.putSerializable("kvizovi", kvizovi);
                 detailFrag.setArguments(bundle);
 
-                manager.beginTransaction().add(R.id.detailPlace, detailFrag, DETALJI_TAG).commit();
+                manager.beginTransaction().replace(R.id.detailPlace, detailFrag, DETALJI_TAG).commit();
             }
 
             listaFrag = (ListaFrag) manager.findFragmentByTag(LISTA_TAG);
             if (listaFrag == null) {
                 listaFrag = new ListaFrag();
 
-                kategorije.add(new Kategorija("Svi", "-1"));
-
-                Bundle bundle = new Bundle();
-                bundle.putSerializable("kategorije", kategorije);
-                listaFrag.setArguments(bundle);
-
-                manager.beginTransaction().add(R.id.listPlace, listaFrag, LISTA_TAG).commit();
+                manager.beginTransaction().replace(R.id.listPlace, listaFrag, LISTA_TAG).commit();
             }
 
         }

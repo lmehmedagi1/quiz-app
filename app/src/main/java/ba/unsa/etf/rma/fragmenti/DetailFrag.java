@@ -84,19 +84,32 @@ public class DetailFrag extends Fragment {
         ArrayList<Kviz> noviKvizovi = new ArrayList<>();
 
         for (Kviz k : kvizovi) {
-            if (k.getKategorija().getNaziv().equals(nazivKategorije))
+            if (k.getKategorija().getNaziv().equals(nazivKategorije) || nazivKategorije.equals("Svi") || k.getNaziv().equals("Dodaj kviz"))
                 noviKvizovi.add(k);
         }
-        noviKvizovi.add(new Kviz("Dodaj kviz", null, new Kategorija("-10", "-10")));
 
-        kvizAdapter = new GridViewAdapter(view.getContext(), kvizovi);
+        kvizAdapter = new GridViewAdapter(view.getContext(), noviKvizovi);
         gridKvizovi.setAdapter(kvizAdapter);
     }
 
     public void azurirajKvizove(ArrayList<Kviz> noviKvizovi) {
-        noviKvizovi.add(new Kviz("Dodaj kviz", null, new Kategorija("-10", "-10")));
+
+        int i = 0;
+
+        for (i = 0; i<noviKvizovi.size(); i++) {
+            if (noviKvizovi.get(i).getNaziv().equals("Dodaj kviz")) {
+                if (i == noviKvizovi.size()-1) break;
+                noviKvizovi.remove(i);
+                i = noviKvizovi.size();
+                break;
+            }
+        }
+
+        if (i == noviKvizovi.size())
+            noviKvizovi.add(new Kviz("Dodaj kviz", null, new Kategorija("-10", "-10")));
+
         kvizovi.clear();
         kvizovi.addAll(noviKvizovi);
-        kvizAdapter.notifyDataSetChanged(); //možda će trebat pozvat primiPoruku i držat trenutnuKategoriju
+        primiPorukuOdListeFrag("Svi");
     }
 }

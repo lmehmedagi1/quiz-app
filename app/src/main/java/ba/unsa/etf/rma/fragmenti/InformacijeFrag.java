@@ -87,6 +87,8 @@ public class InformacijeFrag extends Fragment {
         trenutnoPitanje = dajRandomPitanje();
         if (trenutnoPitanje != null)
             callback.porukaOdInformacija(trenutnoPitanje);
+        else
+            callback.porukaOZadnjemPitanju();
 
         dodajListenerNaButton();
         return v;

@@ -54,6 +54,8 @@ public class ListaFrag extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
+        kategorije.add(new Kategorija("Svi", "-1"));
+
         kategorijaAdapter = new ArrayAdapter<Kategorija>(view.getContext(), android.R.layout.simple_list_item_1, kategorije);
         listaKategorija.setAdapter(kategorijaAdapter);
         dodajListenerNaListu();
@@ -75,6 +77,7 @@ public class ListaFrag extends Fragment {
         kategorije.clear();
         kategorije.addAll(noveKategorije);
         kategorijaAdapter.notifyDataSetChanged();
+        callback.porukaOdListeFrag("Svi");
     }
 
 
