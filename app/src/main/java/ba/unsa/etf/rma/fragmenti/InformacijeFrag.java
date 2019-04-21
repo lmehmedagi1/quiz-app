@@ -123,6 +123,8 @@ public class InformacijeFrag extends Fragment {
         if (postavljenaPitanja.size() != 0) procenat = ((double)brojTacnih)/(postavljenaPitanja.size());
 
         NumberFormat format = NumberFormat.getPercentInstance(Locale.US);
+        format.setMaximumFractionDigits(2);
+        format.setMinimumFractionDigits(2);
         String percentage = format.format(procenat);
 
         brojTacnihPitanjaTV.setText(String.valueOf(brojTacnih));
