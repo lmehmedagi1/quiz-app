@@ -309,131 +309,136 @@ public class DodajKvizAkt extends AppCompatActivity {
     }
 
     private void dodajImportovaniKviz(ArrayList<String> importData) {
+        try {
 
-        String naziv = "";
-        Kategorija kategorija = null;
-        ArrayList<Pitanje> pitanjaZaImportovaniKviz = new ArrayList<>();
-
-
-        if (importData == null || importData.size()==0) {
-            izbaciAlert("Datoteka kviza kojeg importujete nema ispravan format!");
-            return;
-        }
-
-        String prviRed = importData.get(0);
-
-        StringTokenizer tokenizer = new StringTokenizer(prviRed, ",");
-        int i = 0;
-        String nazivKategorije = "";
-        int brojPitanja = -1;
-
-        while (tokenizer.hasMoreTokens()) {
-            if (i == 0) naziv = tokenizer.nextToken();
-            if (i == 1) nazivKategorije = tokenizer.nextToken();
-            if (i == 2) brojPitanja = Integer.parseInt(tokenizer.nextToken());
-            i++;
-        }
-
-        if (i != 3) {
-            izbaciAlert("Datoteka kviza kojeg importujete nema ispravan format!");
-            return;
-        }
-
-        for (Kviz k : kvizovi) {
-            if (k.getNaziv().equals(naziv)) {
-                izbaciAlert("Kviz kojeg importujete već postoji!");
-                return;
-            }
-        }
-
-        for (Kategorija k : kategorije) {
-            if (k.getNaziv().equals(nazivKategorije)) {
-                kategorija = k;
-            }
-        }
+            String naziv = "";
+            Kategorija kategorija = null;
+            ArrayList<Pitanje> pitanjaZaImportovaniKviz = new ArrayList<>();
 
 
-        if (brojPitanja != importData.size()-1) {
-            izbaciAlert("Kviz kojeg imporujete ima neispravan broj pitanja!");
-            return;
-        }
-
-
-
-        for (int j = 1; j<importData.size(); j++) {
-            String pitanjeInfo = importData.get(j);
-
-            if (pitanjeInfo == null || pitanjeInfo.length() == 0) {
+            if (importData == null || importData.size() == 0) {
                 izbaciAlert("Datoteka kviza kojeg importujete nema ispravan format!");
                 return;
             }
 
-            StringTokenizer tokenizerPitanja = new StringTokenizer(pitanjeInfo, ",");
-            int k = 0;
-            String nazivPitanja = "";
-            int brojOdgovora = -1, indeksTacnog = -1;
+            String prviRed = importData.get(0);
 
-            ArrayList<String> odgovori = new ArrayList<>();
+            StringTokenizer tokenizer = new StringTokenizer(prviRed, ",");
+            int i = 0;
+            String nazivKategorije = "";
+            int brojPitanja = -1;
 
-            while (tokenizerPitanja.hasMoreTokens()) {
-                if (k == 0) nazivPitanja = tokenizerPitanja.nextToken();
-                if (k == 1) brojOdgovora = Integer.parseInt(tokenizerPitanja.nextToken());
-                if (k == 2) indeksTacnog = Integer.parseInt(tokenizerPitanja.nextToken());
-
-                if (k>2) {
-                    String odgovor = tokenizerPitanja.nextToken();
-
-                    for (String o : odgovori) {
-                        if (odgovor.equals(o)) {
-                            izbaciAlert("Kviz kojeg importujete nije ispravan postoji ponavljanje odgovora!");
-                            return;
-                        }
-                    }
-
-                    odgovori.add(odgovor);
-                }
-
-                k++;
+            while (tokenizer.hasMoreTokens()) {
+                if (i == 0) naziv = tokenizer.nextToken();
+                if (i == 1) nazivKategorije = tokenizer.nextToken();
+                if (i == 2) brojPitanja = Integer.parseInt(tokenizer.nextToken());
+                i++;
+                if (i == 4) break;
             }
 
-            for (Pitanje p : pitanjaZaImportovaniKviz) {
-                if (p.getNaziv().equals(nazivPitanja)) {
-                    izbaciAlert("Kviz nije ispravan postoje dva pitanja sa istim nazivom!");
+            if (i != 3) {
+                izbaciAlert("Datoteka kviza kojeg importujete nema ispravan format!");
+                return;
+            }
+
+            for (Kviz k : kvizovi) {
+                if (k.getNaziv().equals(naziv)) {
+                    izbaciAlert("Kviz kojeg importujete već postoji!");
                     return;
                 }
             }
 
-            if (brojOdgovora != odgovori.size() || brojOdgovora == 0) {
-                izbaciAlert("Kviz kojeg importujete ima neispravan broj odgovora!");
+            for (Kategorija k : kategorije) {
+                if (k.getNaziv().equals(nazivKategorije)) {
+                    kategorija = k;
+                }
+            }
+
+
+            if (brojPitanja != importData.size() - 1) {
+                izbaciAlert("Kviz kojeg imporujete ima neispravan broj pitanja!");
                 return;
             }
 
-            if (indeksTacnog<0 || indeksTacnog>=odgovori.size()) {
-                izbaciAlert("Kviz kojeg importujete ima neispravan index tačnog odgovora!");
-                return;
+
+            for (int j = 1; j < importData.size(); j++) {
+                String pitanjeInfo = importData.get(j);
+
+                if (pitanjeInfo == null || pitanjeInfo.length() == 0) {
+                    izbaciAlert("Datoteka kviza kojeg importujete nema ispravan format!");
+                    return;
+                }
+
+                StringTokenizer tokenizerPitanja = new StringTokenizer(pitanjeInfo, ",");
+                int k = 0;
+                String nazivPitanja = "";
+                int brojOdgovora = -1, indeksTacnog = -1;
+
+                ArrayList<String> odgovori = new ArrayList<>();
+
+                while (tokenizerPitanja.hasMoreTokens()) {
+                    if (k == 0) nazivPitanja = tokenizerPitanja.nextToken();
+                    if (k == 1) brojOdgovora = Integer.parseInt(tokenizerPitanja.nextToken());
+                    if (k == 2) indeksTacnog = Integer.parseInt(tokenizerPitanja.nextToken());
+
+                    if (k > 2) {
+                        String odgovor = tokenizerPitanja.nextToken();
+
+                        for (String o : odgovori) {
+                            if (odgovor.equals(o)) {
+                                izbaciAlert("Kviz kojeg importujete nije ispravan postoji ponavljanje odgovora!");
+                                return;
+                            }
+                        }
+
+                        odgovori.add(odgovor);
+                    }
+
+                    k++;
+                }
+
+                for (Pitanje p : pitanjaZaImportovaniKviz) {
+                    if (p.getNaziv().equals(nazivPitanja)) {
+                        izbaciAlert("Kviz nije ispravan postoje dva pitanja sa istim nazivom!");
+                        return;
+                    }
+                }
+
+                if (brojOdgovora != odgovori.size() || brojOdgovora == 0) {
+                    izbaciAlert("Kviz kojeg importujete ima neispravan broj odgovora!");
+                    return;
+                }
+
+                if (indeksTacnog < 0 || indeksTacnog >= odgovori.size()) {
+                    izbaciAlert("Kviz kojeg importujete ima neispravan index tačnog odgovora!");
+                    return;
+                }
+
+                pitanjaZaImportovaniKviz.add(new Pitanje(nazivPitanja, nazivPitanja, odgovori, odgovori.get(indeksTacnog)));
             }
 
-            pitanjaZaImportovaniKviz.add(new Pitanje(nazivPitanja, nazivPitanja, odgovori, odgovori.get(indeksTacnog)));
+
+            nazivKviza.setText(naziv);
+
+            // ako ne postoji vec dodajemo je sa icon id -1
+            if (kategorija == null) {
+                kategorija = new Kategorija(nazivKategorije, "-1");
+                dodajKategoriju(kategorija);
+            }
+
+            postaviKategoriju(kategorija);
+
+            // sta se treba desiti sa starim pitanjima i sa mogucim
+            dodanaPitanja.clear();
+            dodanaPitanja.addAll(pitanjaZaImportovaniKviz);
+
+            //radilo je i bez ovog i swear
+            dodanaPitanjaAdapter = new PitanjeAdapter(this, dodanaPitanja);
+            listaDodanihPitanja.setAdapter(dodanaPitanjaAdapter);
         }
-
-
-        nazivKviza.setText(naziv);
-
-        // ako ne postoji vec dodajemo je sa icon id -1
-        if (kategorija == null) {
-            kategorija = new Kategorija(nazivKategorije, "-1");
-            dodajKategoriju(kategorija);
+        catch (Exception e) {
+            izbaciAlert("Datoteka kviza kojeg importujete nema ispravan format!");
         }
-
-        postaviKategoriju(kategorija);
-
-        // sta se treba desiti sa starim pitanjima i sa mogucim
-        dodanaPitanja.clear();
-        dodanaPitanja.addAll(pitanjaZaImportovaniKviz);
-
-        //radilo je i bez ovog i swear
-        dodanaPitanjaAdapter = new PitanjeAdapter(this, dodanaPitanja);
-        listaDodanihPitanja.setAdapter(dodanaPitanjaAdapter);
     }
 
     private void postaviKategoriju(Kategorija kategorija) {

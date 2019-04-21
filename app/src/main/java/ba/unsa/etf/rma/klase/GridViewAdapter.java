@@ -49,7 +49,6 @@ public class GridViewAdapter extends ArrayAdapter<Kviz> {
             iconHelper.addLoadCallback(new IconHelper.LoadCallback() {
                 @Override
                 public void onDataLoaded() {
-                    System.out.println(kviz.getKategorija().getId());
                     ikona.setImageDrawable(iconHelper.getIcon(Integer.valueOf(kviz.getKategorija().getId())).getDrawable(customView.getContext()));
                 }
             });
