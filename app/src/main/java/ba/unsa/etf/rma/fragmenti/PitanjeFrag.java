@@ -104,7 +104,7 @@ public class PitanjeFrag extends Fragment {
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        if (pitanje != null)
+                        if (pitanje != null && callback != null)
                             callback.porukaOdPitanja(odabraniOdgovor.equals(pitanje.getTacan()));
                     }
                 }, 2000);
