@@ -34,6 +34,8 @@ import ba.unsa.etf.rma.fragmenti.InformacijeFrag;
 import ba.unsa.etf.rma.fragmenti.ListaFrag;
 import ba.unsa.etf.rma.fragmenti.PitanjeFrag;
 import ba.unsa.etf.rma.klase.AccessToken;
+import ba.unsa.etf.rma.klase.HttpGetRequest;
+import ba.unsa.etf.rma.klase.HttpPostRequest;
 import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.klase.KvizAdapter;
@@ -172,11 +174,35 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
     }
 
     public void otvoriNovuAktivnost(Kviz odabraniKviz) {
+    /*
+        try {
+            String url = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Kvizovi?access_token=";
+
+            //String to place our result in
+            String result;
+
+            Log.wtf("TOKEN", TOKEN);
+
+            //Instantiate new instance of our class
+            HttpGetRequest getRequest = new HttpGetRequest();
+
+            //Perform the doInBackground method, passing in our url
+            result = getRequest.execute(url, TOKEN).get();
+
+            Toast.makeText(this, result, Toast.LENGTH_SHORT).show();
+
+            Log.wtf("Result: ", result);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        */
+
         Intent intent = new Intent(KvizoviAkt.this, DodajKvizAkt.class);
         intent.putExtra("kvizovi", kvizovi);
         intent.putExtra("kategorije", kategorije);
         intent.putExtra("kviz", odabraniKviz);
         KvizoviAkt.this.startActivityForResult(intent, 10);
+
     }
 
     private void dodajListenerNaSpinner() {
@@ -243,6 +269,22 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
 
     private void dodajKviz(Kviz kviz) {
         kvizovi.add(kviz);
+
+        String url = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Kvizovi?access_token=";
+        String dokument = "{  \"fields\": { \"naziv\": {\"stringValue\": \"" + kviz.getNaziv() + "\"}," +
+                                           "\"idKategorije\": {\"stringValue\": \"" + kviz.getKategorija().getIdDokumenta() + "\"}," +
+                                           "\"pitanja\": {\"arrayValue\": { \"values\": [";
+
+        ArrayList<Pitanje> pitanja = kviz.getPitanja();
+        for (int i = 0; i<pitanja.size(); i++) {
+            dokument += "{\"stringValue\": \"" + pitanja.get(i) + "\"}";
+            if (i<pitanja.size()-1) dokument += ",";
+        }
+
+        dokument += "]}}}}";
+
+        HttpPostRequest postRequest = new HttpPostRequest();
+        postRequest.execute(url, TOKEN, dokument);
 
         if (dpwidth >= 550) {
             detailFrag.azurirajKvizove(kvizovi);

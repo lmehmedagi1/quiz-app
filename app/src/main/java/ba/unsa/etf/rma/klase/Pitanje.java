@@ -9,6 +9,7 @@ public class Pitanje implements Serializable {
     private String tekstPitanja;
     private ArrayList<String> odgovori;
     private String tacan;
+    private String idDokumenta = "";
 
     public Pitanje(String naziv, String tekstPitanja, ArrayList<String> odgovori, String tacan) {
         this.naziv = naziv;
@@ -54,6 +55,14 @@ public class Pitanje implements Serializable {
         randomOdgovori.addAll(odgovori);
         Collections.shuffle(randomOdgovori);
         return randomOdgovori;
+    }
+
+    public String getIdDokumenta() {
+        return idDokumenta;
+    }
+
+    public void setIdDokumenta(String idDokumenta) {
+        this.idDokumenta = idDokumenta;
     }
 
     @Override
