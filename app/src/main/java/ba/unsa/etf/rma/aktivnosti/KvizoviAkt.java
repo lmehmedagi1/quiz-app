@@ -1,7 +1,6 @@
 package ba.unsa.etf.rma.aktivnosti;
 
 import android.content.Intent;
-import android.icu.text.IDNA;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -10,32 +9,18 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.Spinner;
-import android.widget.Toast;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.common.collect.Lists;
-//import com.google.api.client.util.Lists;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.UUID;
 
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.fragmenti.DetailFrag;
-import ba.unsa.etf.rma.fragmenti.InformacijeFrag;
 import ba.unsa.etf.rma.fragmenti.ListaFrag;
-import ba.unsa.etf.rma.fragmenti.PitanjeFrag;
 import ba.unsa.etf.rma.klase.AccessToken;
 import ba.unsa.etf.rma.klase.HttpGetRequest;
-import ba.unsa.etf.rma.klase.HttpPostRequest;
+import ba.unsa.etf.rma.klase.HttpPatchRequest;
 import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.klase.KvizAdapter;
@@ -51,6 +36,7 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
 
     private ArrayList<Kviz> kvizovi = new ArrayList<>();
     private ArrayList<Kategorija> kategorije = new ArrayList<>();
+    private ArrayList<Pitanje> pitanja = new ArrayList<>();
 
     private View elementZaDodavanje;
 
@@ -75,9 +61,16 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
             accessToken.execute(this);
             TOKEN = accessToken.get();
             System.out.print(TOKEN);
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
+
+            HttpGetRequest getRequest = new HttpGetRequest();
+            ArrayList<Object> result = getRequest.execute(TOKEN).get();
+
+            kategorije.add(new Kategorija("Svi", "-1"));
+
+            kvizovi = (ArrayList<Kviz>) result.get(0);
+            kategorije.addAll((ArrayList<Kategorija>) result.get(1));
+            pitanja = (ArrayList<Pitanje>) result.get(2);
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -89,14 +82,14 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         if (dpwidth >= 550) {
             FragmentManager manager = getSupportFragmentManager();
 
-            kategorije.add(new Kategorija("Svi", "-1"));
-
             detailFrag = (DetailFrag) manager.findFragmentByTag(DETALJI_TAG);
             if (detailFrag == null) {
                 detailFrag = new DetailFrag();
 
                 Bundle bundle = new Bundle();
                 bundle.putSerializable("kvizovi", kvizovi);
+                bundle.putSerializable("kategorije", kategorije);
+                bundle.putSerializable("pitanja", pitanja);
                 detailFrag.setArguments(bundle);
 
                 manager.beginTransaction().replace(R.id.detailPlace, detailFrag, DETALJI_TAG).commit();
@@ -113,8 +106,6 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         else {
             listaKvizova = (ListView) findViewById(R.id.lvKvizovi);
             spinner = (Spinner) findViewById(R.id.spPostojeceKategorije);
-
-            kategorije.add(new Kategorija("Svi", "-1"));
 
             kategorijaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, kategorije);
             kategorijaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -170,39 +161,18 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
     public void otvoriAktivnostZaIgranjeKviza(Kviz odabraniKviz) {
         Intent intent = new Intent(KvizoviAkt.this, IgrajKvizAkt.class);
         intent.putExtra("kviz", odabraniKviz);
+        intent.putExtra("token", TOKEN);
         KvizoviAkt.this.startActivityForResult(intent, 20);
     }
 
     public void otvoriNovuAktivnost(Kviz odabraniKviz) {
-    /*
-        try {
-            String url = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Kvizovi?access_token=";
-
-            //String to place our result in
-            String result;
-
-            Log.wtf("TOKEN", TOKEN);
-
-            //Instantiate new instance of our class
-            HttpGetRequest getRequest = new HttpGetRequest();
-
-            //Perform the doInBackground method, passing in our url
-            result = getRequest.execute(url, TOKEN).get();
-
-            Toast.makeText(this, result, Toast.LENGTH_SHORT).show();
-
-            Log.wtf("Result: ", result);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        */
-
         Intent intent = new Intent(KvizoviAkt.this, DodajKvizAkt.class);
         intent.putExtra("kvizovi", kvizovi);
         intent.putExtra("kategorije", kategorije);
+        intent.putExtra("pitanja", pitanja);
         intent.putExtra("kviz", odabraniKviz);
+        intent.putExtra("token", TOKEN);
         KvizoviAkt.this.startActivityForResult(intent, 10);
-
     }
 
     private void dodajListenerNaSpinner() {
@@ -241,6 +211,8 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
                         if (kvizovi.get(i).getNaziv().equals(nazivIzmijenjenog)) {
                             kvizovi.set(i, kviz);
 
+                            dodajKviz(kvizovi.get(i));
+
                             if (dpwidth >= 550) {
                                 detailFrag.azurirajKvizove(kvizovi);
                                 return;
@@ -267,24 +239,29 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         }
     }
 
+
     private void dodajKviz(Kviz kviz) {
-        kvizovi.add(kviz);
-
-        String url = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Kvizovi?access_token=";
-        String dokument = "{  \"fields\": { \"naziv\": {\"stringValue\": \"" + kviz.getNaziv() + "\"}," +
-                                           "\"idKategorije\": {\"stringValue\": \"" + kviz.getKategorija().getIdDokumenta() + "\"}," +
-                                           "\"pitanja\": {\"arrayValue\": { \"values\": [";
-
-        ArrayList<Pitanje> pitanja = kviz.getPitanja();
-        for (int i = 0; i<pitanja.size(); i++) {
-            dokument += "{\"stringValue\": \"" + pitanja.get(i) + "\"}";
-            if (i<pitanja.size()-1) dokument += ",";
+        if (kviz.getIdDokumenta() == null || kviz.getIdDokumenta().length() == 0) {
+            kvizovi.add(kviz);
+            String id = UUID.randomUUID().toString();
+            kviz.setIdDokumenta(id);
         }
 
-        dokument += "]}}}}";
+        String url = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Kvizovi/" + kviz.getIdDokumenta() + "?access_token=";
+        StringBuilder dokument = new StringBuilder("{\"fields\": { \"naziv\": {\"stringValue\": \"" + kviz.getNaziv() + "\"}," +
+                "\"idKategorije\": {\"stringValue\": \"" + kviz.getKategorija().getIdDokumenta() + "\"}," +
+                "\"pitanja\": {\"arrayValue\": { \"values\": [");
+        ArrayList<Pitanje> pitanja = kviz.getPitanja();
+        for (int i = 0; i<pitanja.size(); i++) {
+            dokument.append("{\"stringValue\": \"").append(pitanja.get(i).getIdDokumenta()).append("\"}");
+            if (i<pitanja.size()-1) dokument.append(",");
+        }
+        dokument.append("]}}}}");
 
-        HttpPostRequest postRequest = new HttpPostRequest();
-        postRequest.execute(url, TOKEN, dokument);
+        Log.wtf("TOKEN", TOKEN);
+
+        HttpPatchRequest patchRequest = new HttpPatchRequest();
+        patchRequest.execute(url, TOKEN, dokument.toString());
 
         if (dpwidth >= 550) {
             detailFrag.azurirajKvizove(kvizovi);
@@ -306,7 +283,6 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         kvizAdapter = new KvizAdapter(getBaseContext(), kvizoviIzOdabraneKategorije);
         listaKvizova.setAdapter(kvizAdapter);
     }
-
 
     @Override
     public void porukaOdListeFrag(String nazivKategorije) {

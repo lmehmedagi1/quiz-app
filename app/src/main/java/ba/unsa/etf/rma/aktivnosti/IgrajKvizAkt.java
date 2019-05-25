@@ -8,6 +8,8 @@ import android.os.Bundle;
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.fragmenti.InformacijeFrag;
 import ba.unsa.etf.rma.fragmenti.PitanjeFrag;
+import ba.unsa.etf.rma.fragmenti.RangLista;
+import ba.unsa.etf.rma.klase.HttpPatchRequest;
 import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.klase.Pitanje;
 
@@ -15,24 +17,31 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
 
     private InformacijeFrag informacijeFrag;
     private PitanjeFrag pitanjeFrag;
+    private RangLista rangListaFrag;
 
     private static final String INFO_TAG = "info";
     private static final String PITANJE_TAG = "pitanje";
+    private static final String RANG_LISTA_TAG = "ranglista";
 
     private Kviz kviz = null;
+    private String token = "";
+
+    private FragmentManager manager = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (savedInstanceState != null) return; //myb
+        if (savedInstanceState != null) return;
 
         setContentView(R.layout.activity_igraj_kviz_akt);
 
         Intent intent = getIntent();
         kviz = (Kviz)intent.getSerializableExtra("kviz");
+        token = intent.getStringExtra("token");
 
-        FragmentManager manager = getSupportFragmentManager();
+
+        manager = getSupportFragmentManager();
 
         pitanjeFrag = (PitanjeFrag) manager.findFragmentByTag(PITANJE_TAG);
         if (pitanjeFrag == null) {
@@ -60,8 +69,23 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
     }
 
     @Override
-    public void porukaOZadnjemPitanju() {
-        pitanjeFrag.primiPorukuOZadnjemPitanju();
+    public void porukaOZadnjemPitanju(String ime, double procenat) {
+        String url = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Rangliste?access_token=";
+        String dokument = "{\"fields\": { \"nazivKviza\": {\"stringValue\": \"" + kviz.getNaziv() + "\"}," +
+                                         "\"lista\": {\"mapValue\": {\"fields\": { \"pozicija\": { \"integerValue\": \"0\"}, " +
+                                                                                  "\"informacije\": {\"mapValue\": {\"fields\": {\"imeIgraca\": {\"stringValue\": \"" + ime + "\"}," +
+                                                                                                                                 "\"procenatTacnih\": {\"integerValue\": \"" + procenat + "\"}}}}}}}}}}";
+
+        HttpPatchRequest postRequest = new HttpPatchRequest();
+        postRequest.execute(url, token, dokument);
+
+
+
+        rangListaFrag = (RangLista) manager.findFragmentByTag(RANG_LISTA_TAG);
+        if (rangListaFrag == null) {
+            rangListaFrag = new RangLista();
+            manager.beginTransaction().add(R.id.pitanjePlace, rangListaFrag, RANG_LISTA_TAG).commit();
+        }
     }
 
     @Override

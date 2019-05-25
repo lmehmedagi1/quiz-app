@@ -7,6 +7,7 @@ public class Kviz implements Serializable {
     private String naziv;
     private ArrayList<Pitanje> pitanja;
     private Kategorija kategorija;
+    private String idDokumenta = "";
 
     public Kviz(String naziv, ArrayList<Pitanje> pitanja, Kategorija kategorija) {
         this.naziv = naziv;
@@ -40,5 +41,13 @@ public class Kviz implements Serializable {
 
     public void dodajPitanje(Pitanje pitanje){
         pitanja.add(pitanje);
+    }
+
+    public String getIdDokumenta() {
+        return idDokumenta;
+    }
+
+    public void setIdDokumenta(String idDokumenta) {
+        this.idDokumenta = idDokumenta;
     }
 }

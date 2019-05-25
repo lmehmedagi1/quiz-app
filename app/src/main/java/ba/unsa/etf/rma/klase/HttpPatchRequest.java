@@ -16,10 +16,11 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import ba.unsa.etf.rma.R;
 
-public class HttpPostRequest extends AsyncTask<String, Void, Void> {
+public class HttpPatchRequest extends AsyncTask<String, Void, Void> {
 
     @Override
     protected Void doInBackground(String... strings) {
@@ -32,31 +33,28 @@ public class HttpPostRequest extends AsyncTask<String, Void, Void> {
 
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setDoOutput(true);
-            connection.setRequestMethod("POST");
+            connection.setRequestMethod("PATCH");
             connection.setRequestProperty("Content-Type", "application/json"); //utf-8 je default encoding
             connection.setRequestProperty("Accept", "application/json");
 
-
             String dokument = strings[2];
 
-            //dokument = "{ \"fields\": { \"atribut\": {\"stringValue\":\"novi dokument\"}}}";
-
             try (OutputStream os = connection.getOutputStream()) {
-                byte[] input = dokument.getBytes("utf-8");
+                byte[] input = dokument.getBytes(StandardCharsets.UTF_8);
                 os.write(input, 0, input.length);
             }
 
             int code = connection.getResponseCode();
             InputStream odgovor = connection.getInputStream();
 
-            try (BufferedReader br  = new BufferedReader(new InputStreamReader(odgovor, "utf-8"))) {
+            try (BufferedReader br  = new BufferedReader(new InputStreamReader(odgovor, StandardCharsets.UTF_8))) {
                 StringBuilder response  = new StringBuilder();
                 String responseLine = null;
 
                 while ((responseLine = br.readLine()) != null)
                     response.append(responseLine.trim());
 
-                Log.d("ODGOVOR", response.toString());
+                Log.wtf("ODGOVOR", response.toString());
             }
 
         } catch (Exception e) {

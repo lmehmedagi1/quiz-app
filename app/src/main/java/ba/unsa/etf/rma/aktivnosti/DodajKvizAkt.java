@@ -2,15 +2,11 @@ package ba.unsa.etf.rma.aktivnosti;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
@@ -25,14 +21,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.StringTokenizer;
+import java.util.UUID;
 
 import ba.unsa.etf.rma.R;
+import ba.unsa.etf.rma.klase.HttpPatchRequest;
 import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.klase.Kviz;
-import ba.unsa.etf.rma.klase.KvizAdapter;
 import ba.unsa.etf.rma.klase.Pitanje;
 import ba.unsa.etf.rma.klase.PitanjeAdapter;
 
@@ -62,6 +57,8 @@ public class DodajKvizAkt extends AppCompatActivity {
     private boolean izmjena = false;
     private String imeOdabranogKviza;
 
+    private String TOKEN = "";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -79,12 +76,14 @@ public class DodajKvizAkt extends AppCompatActivity {
 
         Intent intent = getIntent();
 
+        TOKEN = intent.getStringExtra("token");
         kviz = (Kviz)intent.getSerializableExtra("kviz");
         kvizovi = (ArrayList<Kviz>)intent.getSerializableExtra("kvizovi");
         kategorije = (ArrayList<Kategorija>)intent.getSerializableExtra("kategorije");
         kategorije.add(new Kategorija("Dodaj kategoriju", "Dodaj kategoriju"));
 
         dodajDodanaPitanja();
+        dodajMogucaPitanja();
 
         kategorijaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, kategorije);
         kategorijaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -183,7 +182,6 @@ public class DodajKvizAkt extends AppCompatActivity {
         });
     }
 
-
     private void dodajKategorijuKviza() {
         if (kviz != null) {
             for (int i = 0; i<kategorije.size(); i++)
@@ -207,6 +205,7 @@ public class DodajKvizAkt extends AppCompatActivity {
         if (kviz != null)
             dodanaPitanja.addAll(kviz.getPitanja());
     }
+    private void dodajMogucaPitanja() {}
 
 
     private void dodajKviz() {
@@ -290,10 +289,6 @@ public class DodajKvizAkt extends AppCompatActivity {
                 spinner.setSelection(0);
         }
         else if (requestCode == 42  && resultCode == Activity.RESULT_OK) {
-            // The document selected by the user won't be returned in the intent.
-            // Instead, a URI to that document will be contained in the return intent
-            // provided to this method as a parameter.
-            // Pull that URI using resultData.getData().
             Uri uri = null;
             if (data != null) {
                 uri = data.getData();
@@ -432,7 +427,6 @@ public class DodajKvizAkt extends AppCompatActivity {
             dodanaPitanja.clear();
             dodanaPitanja.addAll(pitanjaZaImportovaniKviz);
 
-            //radilo je i bez ovog i swear
             dodanaPitanjaAdapter = new PitanjeAdapter(this, dodanaPitanja);
             listaDodanihPitanja.setAdapter(dodanaPitanjaAdapter);
         }
@@ -470,8 +464,18 @@ public class DodajKvizAkt extends AppCompatActivity {
         return importData;
     }
 
-
     private void dodajKategoriju(Kategorija kategorija) {
+
+        String id = UUID.randomUUID().toString();
+        kategorija.setIdDokumenta(id);
+
+        String url = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Kategorije/" + id + "?access_token=";
+        String dokument = "{\"fields\": { \"naziv\": {\"stringValue\": \"" + kategorija.getNaziv() + "\"}," +
+                                         "\"idIkonice\": {\"integerValue\": \"" + kategorija.getId() + "\"}}}";
+
+        HttpPatchRequest postRequest = new HttpPatchRequest();
+        postRequest.execute(url, TOKEN, dokument);
+
         kategorije.remove(kategorije.size()-1);
         kategorije.add(kategorija);
         kategorije.add(new Kategorija("Dodaj kategoriju", "Dodaj kategoriju"));
@@ -481,9 +485,33 @@ public class DodajKvizAkt extends AppCompatActivity {
     }
 
     private void dodajPitanje(Pitanje pitanje) {
+
+        String id = UUID.randomUUID().toString();
+        pitanje.setIdDokumenta(id);
+
+        //String url = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Pitanje/!documentId=" + id + "&access_token=";
+        String url = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Pitanje/" + id + "?access_token=";
+        String dokument = "{\"fields\": { \"naziv\": {\"stringValue\": \"" + pitanje.getNaziv() + "\"}," +
+                                         "\"odgovori\": {\"arrayValue\": {\"values\": [";
+
+        int indexTacnog = 0;
+
+        ArrayList<String> odgovori = pitanje.getOdgovori();
+        for (int i = 0; i<odgovori.size(); i++) {
+            dokument += "{\"stringValue\": \"" + odgovori.get(i) + "\"}";
+            if (i < odgovori.size() - 1)
+                dokument += ",";
+            if (odgovori.get(i).equals(pitanje.getTacan()))
+                indexTacnog = i;
+        }
+
+        dokument += "]}}, \"indexTacnog\": {\"integerValue\": \"" + indexTacnog + "\"}}}";
+
+        HttpPatchRequest postRequest = new HttpPatchRequest();
+        postRequest.execute(url, TOKEN, dokument);
+
         dodanaPitanja.add(pitanje);
 
-        //radilo je i bez ovog i swear
         dodanaPitanjaAdapter = new PitanjeAdapter(this, dodanaPitanja);
         listaDodanihPitanja.setAdapter(dodanaPitanjaAdapter);
     }

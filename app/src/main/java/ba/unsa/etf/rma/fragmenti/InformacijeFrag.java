@@ -1,7 +1,9 @@
 package ba.unsa.etf.rma.fragmenti;
 
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -9,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import java.text.NumberFormat;
@@ -27,7 +30,7 @@ public class InformacijeFrag extends Fragment {
 
     public interface porukaOdInformacija {
         void porukaOdInformacija (Pitanje pitanje);
-        void porukaOZadnjemPitanju();
+        void porukaOZadnjemPitanju(String s, double p);
     }
 
     private porukaOdInformacija callback;
@@ -46,6 +49,9 @@ public class InformacijeFrag extends Fragment {
 
     private static int brojTacnih = 0;
 
+    private View v = null;
+    private double procenat = 0;
+
 
     public InformacijeFrag() {
         // Required empty public constructor
@@ -60,7 +66,7 @@ public class InformacijeFrag extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.fragment_informacije, container, false);
+        v = inflater.inflate(R.layout.fragment_informacije, container, false);
 
         brojTacnih = 0;
 
@@ -88,7 +94,7 @@ public class InformacijeFrag extends Fragment {
         if (trenutnoPitanje != null)
             callback.porukaOdInformacija(trenutnoPitanje);
         else
-            callback.porukaOZadnjemPitanju();
+            zadnjePitanje();
 
         dodajListenerNaButton();
         return v;
@@ -119,7 +125,7 @@ public class InformacijeFrag extends Fragment {
     public void primiPorukuOdPitanjaFragment(boolean tacanOdgovor) {
         if (tacanOdgovor) brojTacnih++;
 
-        double procenat = 0;
+        procenat = 0;
         if (postavljenaPitanja.size() != 0) procenat = ((double)brojTacnih)/(postavljenaPitanja.size());
 
         NumberFormat format = NumberFormat.getPercentInstance(Locale.US);
@@ -140,8 +146,50 @@ public class InformacijeFrag extends Fragment {
         if (trenutnoPitanje != null)
             callback.porukaOdInformacija(trenutnoPitanje);
         else
-            callback.porukaOZadnjemPitanju();
+            zadnjePitanje();
 
+    }
+
+    private void zadnjePitanje() {
+
+        final EditText input = new EditText(v.getContext());
+        String ime = "";
+
+        AlertDialog alert = new AlertDialog.Builder(getActivity())
+                .setTitle("Kviz završen")
+                .setMessage("Unesite ime i prezime")
+                .setView(input)
+                .setPositiveButton("OK", null)
+                .create();
+
+        alert.setOnShowListener(new DialogInterface.OnShowListener() {
+
+            @Override
+            public void onShow(final DialogInterface dialog) {
+                Button buttonOk = ((AlertDialog) dialog).getButton(AlertDialog.BUTTON_POSITIVE);
+                if (buttonOk != null) {
+                    buttonOk.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            if (input.getText() != null && input.getText().toString() != "") {
+                                String ime = input.getText().toString();
+                                dialog.cancel();
+                                zavrsiKviz(ime);
+                            }
+                            else {
+                                input.setError("Morate unijeti ime i prezime");
+                            }
+                        }
+                    });
+                }
+            }
+        });
+
+        alert.show();
+    }
+
+    private void zavrsiKviz(String ime) {
+        callback.porukaOZadnjemPitanju(ime, procenat);
     }
 
 
