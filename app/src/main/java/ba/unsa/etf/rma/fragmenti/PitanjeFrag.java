@@ -97,8 +97,6 @@ public class PitanjeFrag extends Fragment {
 
                 odgovoriAdapter.notifyDataSetChanged();
 
-
-
                 // sačekaj 2s
                 final Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {

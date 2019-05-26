@@ -18,6 +18,7 @@ public class HttpGetRequest extends AsyncTask<String, Void, ArrayList<Object>> {
     ArrayList<Kviz> kvizovi = new ArrayList<>();
     ArrayList<Kategorija> kategorije = new ArrayList<>();
     ArrayList<Pitanje> pitanja = new ArrayList<>();
+    ArrayList<RangListaItem> rangListaArray = new ArrayList<>();
 
     @Override
     protected ArrayList<Object> doInBackground(String... strings) {
@@ -41,10 +42,16 @@ public class HttpGetRequest extends AsyncTask<String, Void, ArrayList<Object>> {
             result = getResponse(url);
             ucitajKvizove(result);
 
+            urlString = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Rangliste?access_token=";
+            url = new URL(urlString + URLEncoder.encode(token, "UTF-8"));
+            result = getResponse(url);
+            ucitajRangListu(result);
+
             ArrayList<Object> podaci = new ArrayList<>();
             podaci.add(kvizovi);
             podaci.add(kategorije);
             podaci.add(pitanja);
+            podaci.add(rangListaArray);
 
             return podaci;
         }
@@ -53,6 +60,44 @@ public class HttpGetRequest extends AsyncTask<String, Void, ArrayList<Object>> {
         }
 
         return null;
+    }
+
+    private void ucitajRangListu(String result) {
+        if (result.equals("{}")) return;
+
+        String[] rangListaCollection = result.split("\\{\n\"name\": ");
+
+        for (int i = 1; i < rangListaCollection.length; i++) {
+
+            String rangListaDocument = rangListaCollection[i];
+
+            String[] rows = rangListaDocument.split("\n");
+
+            String id = rows[0].substring(rows[0].length() - 38, rows[0].length() - 2);
+            String nazivKviza = "";
+            String imeIgraca = "";
+            int pozicija = 0;
+            double procenat = 0;
+
+            for (int j = 1; j < rows.length; j++) {
+                if (rows[j].contains("\"nazivKviza\": "))
+                    nazivKviza = rows[j + 1].substring(16, rows[j + 1].length() - 1);
+
+                if (rows[j].contains("\"imeIgraca\": "))
+                    imeIgraca = rows[j + 1].substring(16, rows[j + 1].length() - 1);
+
+                if (rows[j].contains("\"pozicija\": "))
+                    pozicija = Integer.parseInt(rows[j + 1].substring(17, rows[j + 1].length() - 1));
+
+                if (rows[j].contains("\"procenatTacnih\": "))
+                    procenat = Double.parseDouble(rows[j + 1].substring(16, rows[j + 1].length() - 1));
+            }
+
+            RangListaItem rangLista = new RangListaItem(imeIgraca, nazivKviza, procenat);
+            rangLista.setIdDokumenta(id);
+            rangListaArray.add(rangLista);
+        }
+
     }
 
     private void ucitajPitanja(String result) {

@@ -25,6 +25,7 @@ import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.klase.KvizAdapter;
 import ba.unsa.etf.rma.klase.Pitanje;
+import ba.unsa.etf.rma.klase.RangListaItem;
 
 public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdListeFrag {
 
@@ -37,6 +38,7 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
     private ArrayList<Kviz> kvizovi = new ArrayList<>();
     private ArrayList<Kategorija> kategorije = new ArrayList<>();
     private ArrayList<Pitanje> pitanja = new ArrayList<>();
+    private ArrayList<RangListaItem> rangLista = new ArrayList<>();
 
     private View elementZaDodavanje;
 
@@ -62,14 +64,18 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
             TOKEN = accessToken.get();
             System.out.print(TOKEN);
 
-            HttpGetRequest getRequest = new HttpGetRequest();
-            ArrayList<Object> result = getRequest.execute(TOKEN).get();
+            if (savedInstanceState == null) {
+                HttpGetRequest getRequest = new HttpGetRequest();
+                ArrayList<Object> result = getRequest.execute(TOKEN).get();
 
-            kategorije.add(new Kategorija("Svi", "-1"));
+                kategorije.add(new Kategorija("Svi", "-1"));
 
-            kvizovi = (ArrayList<Kviz>) result.get(0);
-            kategorije.addAll((ArrayList<Kategorija>) result.get(1));
-            pitanja = (ArrayList<Pitanje>) result.get(2);
+                kvizovi = (ArrayList<Kviz>) result.get(0);
+                kategorije.addAll((ArrayList<Kategorija>) result.get(1));
+                pitanja = (ArrayList<Pitanje>) result.get(2);
+                rangLista = (ArrayList<RangListaItem>) result.get(3);
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -88,8 +94,6 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
 
                 Bundle bundle = new Bundle();
                 bundle.putSerializable("kvizovi", kvizovi);
-                bundle.putSerializable("kategorije", kategorije);
-                bundle.putSerializable("pitanja", pitanja);
                 detailFrag.setArguments(bundle);
 
                 manager.beginTransaction().replace(R.id.detailPlace, detailFrag, DETALJI_TAG).commit();
@@ -98,6 +102,10 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
             listaFrag = (ListaFrag) manager.findFragmentByTag(LISTA_TAG);
             if (listaFrag == null) {
                 listaFrag = new ListaFrag();
+
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("kategorije", kategorije);
+                listaFrag.setArguments(bundle);
 
                 manager.beginTransaction().replace(R.id.listPlace, listaFrag, LISTA_TAG).commit();
             }
@@ -162,6 +170,7 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         Intent intent = new Intent(KvizoviAkt.this, IgrajKvizAkt.class);
         intent.putExtra("kviz", odabraniKviz);
         intent.putExtra("token", TOKEN);
+        intent.putExtra("rangLista", rangLista);
         KvizoviAkt.this.startActivityForResult(intent, 20);
     }
 
@@ -194,6 +203,9 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
 
                 Kviz kviz = (Kviz) data.getSerializableExtra("kviz");
                 ArrayList<Kategorija> noveKategorije = (ArrayList<Kategorija>) data.getSerializableExtra("kategorije");
+                ArrayList<Pitanje> novaPitanja = (ArrayList<Pitanje>) data.getSerializableExtra("dodanaPitanja");
+                novaPitanja.addAll((ArrayList<Pitanje>) data.getSerializableExtra("mogucaPitanja"));
+                pitanja = novaPitanja;
                 kategorije.clear();
                 kategorije.addAll(noveKategorije);
 
@@ -230,6 +242,10 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
                 ArrayList<Kategorija> noveKategorije = (ArrayList<Kategorija>) data.getSerializableExtra("kategorije");
                 kategorije.clear();
                 kategorije.addAll(noveKategorije);
+
+                ArrayList<Pitanje> novaPitanja = (ArrayList<Pitanje>) data.getSerializableExtra("dodanaPitanja");
+                novaPitanja.addAll((ArrayList<Pitanje>) data.getSerializableExtra("mogucaPitanja"));
+                pitanja = novaPitanja;
 
                 if (dpwidth >= 550)
                     listaFrag.azurirajKategorije(noveKategorije);

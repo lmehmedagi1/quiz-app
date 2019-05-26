@@ -31,12 +31,12 @@ public class DetailFrag extends Fragment {
         // Required empty public constructor
     }
 
-
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.fragment_detail, container, false);
+
+        Bundle bundle = this.getArguments();
+        kvizovi = (ArrayList<Kviz>) bundle.getSerializable("kvizovi");
 
         gridKvizovi = (GridView) view.findViewById(R.id.gridKvizovi);
 
@@ -50,7 +50,7 @@ public class DetailFrag extends Fragment {
         kvizAdapter = new GridViewAdapter(view.getContext(), kvizovi);
         gridKvizovi.setAdapter(kvizAdapter);
 
-        azurirajKvizove(new ArrayList<Kviz>());
+        azurirajKvizove(kvizovi);
 
         dodajListenerNaGrid();
     }

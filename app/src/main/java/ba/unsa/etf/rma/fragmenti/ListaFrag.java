@@ -47,14 +47,15 @@ public class ListaFrag extends Fragment {
 
         listaKategorija = (ListView) view.findViewById(R.id.listaKategorija);
 
+        Bundle bundle = this.getArguments();
+        kategorije = (ArrayList<Kategorija>) bundle.getSerializable("kategorije");
+
         return view;
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
-        kategorije.add(new Kategorija("Svi", "-1"));
 
         kategorijaAdapter = new ArrayAdapter<Kategorija>(view.getContext(), android.R.layout.simple_list_item_1, kategorije);
         listaKategorija.setAdapter(kategorijaAdapter);

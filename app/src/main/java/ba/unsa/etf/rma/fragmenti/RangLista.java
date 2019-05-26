@@ -15,6 +15,7 @@ import java.util.ArrayList;
 
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.klase.RangListaAdapter;
+import ba.unsa.etf.rma.klase.RangListaItem;
 
 public class RangLista extends Fragment {
 
@@ -22,7 +23,8 @@ public class RangLista extends Fragment {
     private RangListaAdapter adapter = null;
 
     private View v = null;
-    private ArrayList<String[]> info = new ArrayList<>();
+
+    private ArrayList<RangListaItem> rangListaItems = new ArrayList<>();
 
 
     public RangLista() {
@@ -34,13 +36,17 @@ public class RangLista extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         v = inflater.inflate(R.layout.fragment_pitanje, container, false);
         lista = (ListView) v.findViewById(R.id.listaLV);
+
+        Bundle bundle = this.getArguments();
+        rangListaItems = (ArrayList<RangListaItem>) bundle.getSerializable("rangLista");
+
         return v;
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        adapter = new RangListaAdapter(v.getContext(), info);
+        adapter = new RangListaAdapter(v.getContext(), rangListaItems);
         lista.setAdapter(adapter);
     }
 

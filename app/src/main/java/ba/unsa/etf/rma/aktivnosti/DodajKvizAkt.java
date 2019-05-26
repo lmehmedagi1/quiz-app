@@ -45,6 +45,7 @@ public class DodajKvizAkt extends AppCompatActivity {
     private ArrayList<Kviz> kvizovi = new ArrayList<>();
     private ArrayList<Pitanje> dodanaPitanja = new ArrayList<>();
     private ArrayList<Pitanje> mogucaPitanja = new ArrayList<>();
+    private ArrayList<Pitanje> svaPitanja = new ArrayList<>();
 
     private ArrayAdapter<Kategorija> kategorijaAdapter = null;
     private PitanjeAdapter dodanaPitanjaAdapter = null;
@@ -80,6 +81,7 @@ public class DodajKvizAkt extends AppCompatActivity {
         kviz = (Kviz)intent.getSerializableExtra("kviz");
         kvizovi = (ArrayList<Kviz>)intent.getSerializableExtra("kvizovi");
         kategorije = (ArrayList<Kategorija>)intent.getSerializableExtra("kategorije");
+        svaPitanja = (ArrayList<Pitanje>)intent.getSerializableExtra("pitanja");
         kategorije.add(new Kategorija("Dodaj kategoriju", "Dodaj kategoriju"));
 
         dodajDodanaPitanja();
@@ -205,7 +207,19 @@ public class DodajKvizAkt extends AppCompatActivity {
         if (kviz != null)
             dodanaPitanja.addAll(kviz.getPitanja());
     }
-    private void dodajMogucaPitanja() {}
+    private void dodajMogucaPitanja() {
+        if (kviz == null) {
+            mogucaPitanja.addAll(svaPitanja);
+        }
+        else {
+            for (Pitanje p : svaPitanja) {
+                for (Pitanje pk : kviz.getPitanja()) {
+                    if (!pk.getIdDokumenta().equals(p.getIdDokumenta()))
+                        mogucaPitanja.add(p);
+                }
+            }
+        }
+    }
 
 
     private void dodajKviz() {
@@ -220,6 +234,8 @@ public class DodajKvizAkt extends AppCompatActivity {
 
         kategorije.remove(kategorije.size()-1);
         intent.putExtra("kategorije", kategorije);
+        intent.putExtra("dodanaPitanja", dodanaPitanja);
+        intent.putExtra("mogucaPitanja", mogucaPitanja);
         setResult(10, intent);
 
         finish();
@@ -409,6 +425,9 @@ public class DodajKvizAkt extends AppCompatActivity {
                     return;
                 }
 
+                // provjeriti postoji li vec pitanje, uzeti id
+                // Pitanje novoPitanje = new Pitanje(nazivPitanja, nazivPitanja, odgovori, odgovori.get(indeksTacnog));
+
                 pitanjaZaImportovaniKviz.add(new Pitanje(nazivPitanja, nazivPitanja, odgovori, odgovori.get(indeksTacnog)));
             }
 
@@ -489,7 +508,6 @@ public class DodajKvizAkt extends AppCompatActivity {
         String id = UUID.randomUUID().toString();
         pitanje.setIdDokumenta(id);
 
-        //String url = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Pitanje/!documentId=" + id + "&access_token=";
         String url = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Pitanje/" + id + "?access_token=";
         String dokument = "{\"fields\": { \"naziv\": {\"stringValue\": \"" + pitanje.getNaziv() + "\"}," +
                                          "\"odgovori\": {\"arrayValue\": {\"values\": [";
@@ -523,6 +541,8 @@ public class DodajKvizAkt extends AppCompatActivity {
 
         kategorije.remove(kategorije.size()-1);
         intent.putExtra("kategorije", kategorije);
+        intent.putExtra("dodanaPitanja", dodanaPitanja);
+        intent.putExtra("mogucaPitanja", mogucaPitanja);
         setResult(11, intent);
 
         finish();

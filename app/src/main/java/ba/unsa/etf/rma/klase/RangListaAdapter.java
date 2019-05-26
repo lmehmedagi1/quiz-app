@@ -16,10 +16,10 @@ import java.util.ArrayList;
 
 import ba.unsa.etf.rma.R;
 
-public class RangListaAdapter extends ArrayAdapter<String[]> {
+public class RangListaAdapter extends ArrayAdapter<RangListaItem> {
 
-    public RangListaAdapter(Context context, ArrayList<String[]> strings) {
-        super(context, R.layout.element_rang_liste, strings);
+    public RangListaAdapter(Context context, ArrayList<RangListaItem> items) {
+        super(context, R.layout.element_rang_liste, items);
     }
 
     @Override
@@ -31,11 +31,11 @@ public class RangListaAdapter extends ArrayAdapter<String[]> {
         TextView imeIgracaTV = (TextView) view.findViewById(R.id.imeIgracaTV);
         TextView procenatTacnih = (TextView) view.findViewById(R.id.procenatTV);
 
-        String[] strings = getItem(position);
+        RangListaItem item = getItem(position);
 
-        pozicijaTV.setText(strings[0]);
-        imeIgracaTV.setText(strings[1]);
-        procenatTacnih.setText(strings[2]);
+        pozicijaTV.setText(String.valueOf(position));
+        imeIgracaTV.setText(item.getImeIgraca());
+        procenatTacnih.setText(String.valueOf(item.getProcenatTacnih()));
 
         return view;
     }
