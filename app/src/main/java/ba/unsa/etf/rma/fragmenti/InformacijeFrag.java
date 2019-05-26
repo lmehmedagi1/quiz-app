@@ -171,7 +171,7 @@ public class InformacijeFrag extends Fragment {
                     buttonOk.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
-                            if (input.getText() != null && input.getText().toString() != "") {
+                            if (input.getText() != null && !input.getText().toString().equals("")) {
                                 String ime = input.getText().toString();
                                 dialog.cancel();
                                 zavrsiKviz(ime);

@@ -25,8 +25,20 @@ public class HttpGetRequest extends AsyncTask<String, Void, ArrayList<Object>> {
         token = strings[0];
         String result, urlString;
         URL url;
+        ArrayList<Object> podaci = new ArrayList<>();
+
 
         try {
+
+            if (!strings[1].equals("pokretanje aplikacije")) {
+                urlString = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Rangliste?access_token=";
+                url = new URL(urlString + URLEncoder.encode(token, "UTF-8"));
+                result = getResponse(url);
+                ucitajRangListu(result);
+                podaci.add(rangListaArray);
+                return podaci;
+            }
+
             urlString = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Kategorije?access_token=";
             url = new URL(urlString + URLEncoder.encode(token, "UTF-8"));
             result = getResponse(url);
@@ -42,16 +54,9 @@ public class HttpGetRequest extends AsyncTask<String, Void, ArrayList<Object>> {
             result = getResponse(url);
             ucitajKvizove(result);
 
-            urlString = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Rangliste?access_token=";
-            url = new URL(urlString + URLEncoder.encode(token, "UTF-8"));
-            result = getResponse(url);
-            ucitajRangListu(result);
-
-            ArrayList<Object> podaci = new ArrayList<>();
             podaci.add(kvizovi);
             podaci.add(kategorije);
             podaci.add(pitanja);
-            podaci.add(rangListaArray);
 
             return podaci;
         }
@@ -68,6 +73,8 @@ public class HttpGetRequest extends AsyncTask<String, Void, ArrayList<Object>> {
         String[] rangListaCollection = result.split("\\{\n\"name\": ");
 
         for (int i = 1; i < rangListaCollection.length; i++) {
+            Log.wtf("TAGELEMENTID", rangListaCollection[i]);
+
 
             String rangListaDocument = rangListaCollection[i];
 
@@ -90,10 +97,10 @@ public class HttpGetRequest extends AsyncTask<String, Void, ArrayList<Object>> {
                     pozicija = Integer.parseInt(rows[j + 1].substring(17, rows[j + 1].length() - 1));
 
                 if (rows[j].contains("\"procenatTacnih\": "))
-                    procenat = Double.parseDouble(rows[j + 1].substring(16, rows[j + 1].length() - 1));
+                    procenat = Double.parseDouble(rows[j + 1].substring(15));
             }
 
-            RangListaItem rangLista = new RangListaItem(imeIgraca, nazivKviza, procenat);
+            RangListaItem rangLista = new RangListaItem(imeIgraca, nazivKviza, procenat, pozicija);
             rangLista.setIdDokumenta(id);
             rangListaArray.add(rangLista);
         }

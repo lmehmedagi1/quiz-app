@@ -25,7 +25,7 @@ public class RangListaAdapter extends ArrayAdapter<RangListaItem> {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         LayoutInflater inflater = LayoutInflater.from(getContext());
-        View view = inflater.inflate(R.layout.element_liste, parent, false);
+        View view = inflater.inflate(R.layout.element_rang_liste, parent, false);
 
         TextView pozicijaTV = (TextView) view.findViewById(R.id.pozicijaTV);
         TextView imeIgracaTV = (TextView) view.findViewById(R.id.imeIgracaTV);
@@ -33,7 +33,7 @@ public class RangListaAdapter extends ArrayAdapter<RangListaItem> {
 
         RangListaItem item = getItem(position);
 
-        pozicijaTV.setText(String.valueOf(position));
+        pozicijaTV.setText(String.valueOf(item.getPozicija()));
         imeIgracaTV.setText(item.getImeIgraca());
         procenatTacnih.setText(String.valueOf(item.getProcenatTacnih()));
 

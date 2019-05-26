@@ -43,6 +43,7 @@ public class ListaFrag extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        if (container == null) return null;
         view = inflater.inflate(R.layout.fragment_lista, container, false);
 
         listaKategorija = (ListView) view.findViewById(R.id.listaKategorija);
@@ -56,6 +57,7 @@ public class ListaFrag extends Fragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        if (view == null) return;
 
         kategorijaAdapter = new ArrayAdapter<Kategorija>(view.getContext(), android.R.layout.simple_list_item_1, kategorije);
         listaKategorija.setAdapter(kategorijaAdapter);

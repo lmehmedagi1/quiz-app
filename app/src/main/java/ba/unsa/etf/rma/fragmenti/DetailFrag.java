@@ -4,6 +4,7 @@ package ba.unsa.etf.rma.fragmenti;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,12 +34,16 @@ public class DetailFrag extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        if (container == null) return null;
         view = inflater.inflate(R.layout.fragment_detail, container, false);
+
+        gridKvizovi = (GridView) view.findViewById(R.id.gridKvizovi);
 
         Bundle bundle = this.getArguments();
         kvizovi = (ArrayList<Kviz>) bundle.getSerializable("kvizovi");
 
-        gridKvizovi = (GridView) view.findViewById(R.id.gridKvizovi);
+        Log.wtf("DETAIL", "Pozvan je on create view fragmenta detail" + String.valueOf(kvizovi.size()));
+
 
         return view;
     }
@@ -46,6 +51,10 @@ public class DetailFrag extends Fragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+
+        if (view == null) return;
+
+        Log.wtf("Activity create", "Pozvat je on activity created" + String.valueOf(kvizovi.size()));
 
         kvizAdapter = new GridViewAdapter(view.getContext(), kvizovi);
         gridKvizovi.setAdapter(kvizAdapter);
@@ -108,8 +117,7 @@ public class DetailFrag extends Fragment {
         if (i == noviKvizovi.size())
             noviKvizovi.add(new Kviz("Dodaj kviz", null, new Kategorija("-10", "-10")));
 
-        kvizovi.clear();
-        kvizovi.addAll(noviKvizovi);
+        kvizovi = noviKvizovi;
         primiPorukuOdListeFrag("Svi");
     }
 }

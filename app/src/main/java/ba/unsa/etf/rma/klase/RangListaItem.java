@@ -7,14 +7,17 @@ public class RangListaItem implements Serializable {
     private String nazivKviza = "";
     private double procenatTacnih = 0;
     private String idDokumenta = "";
+    private int pozicija = 0;
 
     public RangListaItem() {
     }
 
-    public RangListaItem(String imeIgraca, String nazivKviza, double procenatTacnih) {
+    public RangListaItem(String imeIgraca, String nazivKviza, double procenatTacnih, int pozicija) {
         this.imeIgraca = imeIgraca;
         this.nazivKviza = nazivKviza;
-        this.procenatTacnih = procenatTacnih; }
+        this.procenatTacnih = procenatTacnih;
+        this.pozicija = pozicija;
+    }
 
     public String getImeIgraca() {
         return imeIgraca;
@@ -46,5 +49,13 @@ public class RangListaItem implements Serializable {
 
     public void setIdDokumenta(String idDokumenta) {
         this.idDokumenta = idDokumenta;
+    }
+
+    public int getPozicija() {
+        return pozicija;
+    }
+
+    public void setPozicija(int pozicija) {
+        this.pozicija = pozicija;
     }
 }

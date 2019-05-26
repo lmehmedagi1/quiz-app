@@ -213,10 +213,13 @@ public class DodajKvizAkt extends AppCompatActivity {
         }
         else {
             for (Pitanje p : svaPitanja) {
-                for (Pitanje pk : kviz.getPitanja()) {
-                    if (!pk.getIdDokumenta().equals(p.getIdDokumenta()))
-                        mogucaPitanja.add(p);
+                int i = 0;
+                for (; i<kviz.getPitanja().size(); i++) {
+                    if (p.getIdDokumenta().equals(kviz.getPitanja().get(i).getIdDokumenta()))
+                        break;
                 }
+                if (i == kviz.getPitanja().size())
+                    mogucaPitanja.add(p);
             }
         }
     }
@@ -224,11 +227,16 @@ public class DodajKvizAkt extends AppCompatActivity {
 
     private void dodajKviz() {
         Intent intent = new Intent();
+        String idDokumenta = "";
 
         if (kviz == null) intent.putExtra("izmjena", "dodavanje");
-        else intent.putExtra("izmjena", "izmjena");
+        else {
+            intent.putExtra("izmjena", "izmjena");
+            idDokumenta = kviz.getIdDokumenta();
+        }
 
         kviz = new Kviz(nazivKviza.getText().toString(), dodanaPitanja, (Kategorija) spinner.getSelectedItem());
+        kviz.setIdDokumenta(idDokumenta);
         intent.putExtra("kviz", kviz);
         intent.putExtra("odabraniKviz", imeOdabranogKviza);
 
@@ -508,7 +516,7 @@ public class DodajKvizAkt extends AppCompatActivity {
         String id = UUID.randomUUID().toString();
         pitanje.setIdDokumenta(id);
 
-        String url = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Pitanje/" + id + "?access_token=";
+        String url = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Pitanja/" + id + "?access_token=";
         String dokument = "{\"fields\": { \"naziv\": {\"stringValue\": \"" + pitanje.getNaziv() + "\"}," +
                                          "\"odgovori\": {\"arrayValue\": {\"values\": [";
 
