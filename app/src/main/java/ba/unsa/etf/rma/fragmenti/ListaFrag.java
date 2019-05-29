@@ -16,6 +16,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 import ba.unsa.etf.rma.R;
+import ba.unsa.etf.rma.aktivnosti.KvizoviAkt;
 import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.klase.Kviz;
 
@@ -23,7 +24,7 @@ public class ListaFrag extends Fragment {
 
 
     public interface porukaOdListeFrag {
-        void porukaOdListeFrag (String nazivKategorije);
+        void porukaOdListeFrag (Kategorija kategorija);
     }
 
     private porukaOdListeFrag callback;
@@ -48,8 +49,7 @@ public class ListaFrag extends Fragment {
 
         listaKategorija = (ListView) view.findViewById(R.id.listaKategorija);
 
-        Bundle bundle = this.getArguments();
-        kategorije = (ArrayList<Kategorija>) bundle.getSerializable("kategorije");
+        kategorije = new ArrayList<>();
 
         return view;
     }
@@ -62,6 +62,8 @@ public class ListaFrag extends Fragment {
         kategorijaAdapter = new ArrayAdapter<Kategorija>(view.getContext(), android.R.layout.simple_list_item_1, kategorije);
         listaKategorija.setAdapter(kategorijaAdapter);
         dodajListenerNaListu();
+
+        ((KvizoviAkt)getActivity()).azurirajPodatke(null);
     }
 
     private void dodajListenerNaListu() {
@@ -70,7 +72,7 @@ public class ListaFrag extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> adapter, View v, int position, long arg3) {
                 Kategorija odabranaKategorija = (Kategorija) adapter.getItemAtPosition(position);
-                callback.porukaOdListeFrag(odabranaKategorija.getNaziv());
+                callback.porukaOdListeFrag(odabranaKategorija);
             }
         });
 
@@ -80,7 +82,7 @@ public class ListaFrag extends Fragment {
         kategorije.clear();
         kategorije.addAll(noveKategorije);
         kategorijaAdapter.notifyDataSetChanged();
-        callback.porukaOdListeFrag("Svi");
+        callback.porukaOdListeFrag(kategorije.get(0));
     }
 
 

@@ -44,6 +44,8 @@ public class DodajPitanjeAkt extends AppCompatActivity implements GetRequestResu
 
     private GetRequestResultReceiver receiver = null;
 
+    private String trenutniNaziv = "";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -149,6 +151,7 @@ public class DodajPitanjeAkt extends AppCompatActivity implements GetRequestResu
             @Override
             public void onClick(View v) {
                 if (!validniPodaci()) return;
+                trenutniNaziv = pitanjeET.getText().toString();
                 uzmiSvaPitanja();
             }
         });
@@ -159,7 +162,7 @@ public class DodajPitanjeAkt extends AppCompatActivity implements GetRequestResu
     private void uzmiSvaPitanja() {
         Intent intent = new Intent(Intent.ACTION_SYNC, null, this, GetRequestIntentService.class);
         intent.putExtra("TOKEN", token);
-        intent.putExtra("trebaPitanja", true);
+        intent.putExtra("akcija", GetRequestIntentService.AKCIJA_PITANJA);
         intent.putExtra("receiver", receiver);
         startService(intent);
     }
@@ -171,7 +174,7 @@ public class DodajPitanjeAkt extends AppCompatActivity implements GetRequestResu
                 azuriranaPitanja.clear();
                 azuriranaPitanja.addAll((ArrayList<Pitanje>) resultData.getSerializable("pitanja"));
 
-                pitanje = new Pitanje(pitanjeET.getText().toString(), pitanjeET.getText().toString(), odgovori, tacan);
+                pitanje = new Pitanje(trenutniNaziv, trenutniNaziv, odgovori, tacan);
 
                 boolean validan = true;
 
@@ -190,7 +193,6 @@ public class DodajPitanjeAkt extends AppCompatActivity implements GetRequestResu
 
                 if (!validan) {
                     pitanjeET.setError("Pitanje vec postoji");
-                    pitanjeET.setBackgroundColor(Color.RED);
                     pitanje = null;
                     return;
                 }
@@ -203,18 +205,14 @@ public class DodajPitanjeAkt extends AppCompatActivity implements GetRequestResu
     private boolean validniPodaci() {
         boolean ispravniPodaci = true;
 
-        String nazivPitanja = pitanjeET.getText().toString();
-
-        if (nazivPitanja == null || nazivPitanja.length() == 0) {
+        if (pitanjeET.getText() == null || pitanjeET.getText().toString().length() == 0) {
             pitanjeET.setError("Morate unijeti naziv pitanja");
-            pitanjeET.setBackgroundColor(Color.RED);
             ispravniPodaci = false;
         }
 
         if (tacan == null) {
             ispravniPodaci = false;
             odgovorET.setError("Mora postojati tacan odgovor");
-            odgovorET.setBackgroundColor(Color.RED);
         }
 
         return ispravniPodaci;

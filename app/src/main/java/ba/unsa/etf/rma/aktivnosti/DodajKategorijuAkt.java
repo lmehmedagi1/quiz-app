@@ -30,9 +30,13 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
     private Icon[] selectedIcons;
     private IconDialog iconDialog;
 
-    private ArrayList<Kategorija> kategorije;
+    private ArrayList<Kategorija> azuriraneKategorije = null;
     private String TOKEN;
     private GetRequestResultReceiver receiver = null;
+
+    private String trenutniNaziv = "";
+    private String trenutnaIkona = "";
+    private Kategorija kategorija = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +46,9 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
         // da tastatura ne pomjeri layout
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
+        receiver = new GetRequestResultReceiver(new Handler());
+        receiver.setReceiver(this);
+
         nazivKategorije       = (EditText)findViewById(R.id.etNaziv);
         ikona                 = (EditText)findViewById(R.id.etIkona);
         dodajIkonuButton      = (Button)findViewById(R.id.btnDodajIkonu);
@@ -50,8 +57,7 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
         ikona.setEnabled(false);
 
         Intent intent = getIntent();
-        kategorije = (ArrayList<Kategorija>)intent.getSerializableExtra("kategorije");
-        TOKEN      = intent.getStringExtra("TOKEN");
+        TOKEN = intent.getStringExtra("TOKEN");
 
         iconDialog = new IconDialog();
 
@@ -67,7 +73,6 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
             }
         });
     }
-
     private void ocistiBoje() {
         nazivKategorije.setBackgroundColor(0);
         ikona.setBackgroundColor(0);
@@ -86,9 +91,19 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
             @Override
             public void onClick(View v) {
                 if (!validniPodaci()) return;
-                vratiKategorijuUPrethodnuAktivnost();
+                trenutniNaziv = nazivKategorije.getText().toString();
+                trenutnaIkona = ikona.getText().toString();
+                uzmiNoveKategorije();
             }
         });
+    }
+
+    private void uzmiNoveKategorije() {
+        Intent intent = new Intent(Intent.ACTION_SYNC, null, this, GetRequestIntentService.class);
+        intent.putExtra("TOKEN", TOKEN);
+        intent.putExtra("akcija", GetRequestIntentService.AKCIJA_KATEGORIJE);
+        intent.putExtra("receiver", receiver);
+        startService(intent);
     }
 
     private boolean validniPodaci() {
@@ -97,32 +112,13 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
         if (nazivKategorije.getText() == null || nazivKategorije.getText().toString().length() == 0) {
             ispravniPodaci = false;
             nazivKategorije.setBackgroundColor(Color.RED);
-        }
-        else {
-
-            Intent intent = new Intent(Intent.ACTION_SYNC, null, this, GetRequestIntentService.class);
-            intent.putExtra("TOKEN", TOKEN);
-            intent.putExtra("trebaKategorije", true);
-
-            receiver = new GetRequestResultReceiver(new Handler());
-            receiver.setReceiver(this);
-
-            intent.putExtra("receiver", receiver);
-            startService(intent);
-
-            // možda treba sad ovdje alert dialog al to kasnije
-
-            for (Kategorija k : kategorije) {
-                if (nazivKategorije.getText().toString().equals(k.getNaziv())) {
-                    ispravniPodaci = false;
-                    nazivKategorije.setBackgroundColor(Color.RED);
-                }
-            }
+            nazivKategorije.setError("Morate unijeti naziv kategorije");
         }
 
         if (ikona.getText() == null || ikona.getText().toString().length() == 0) {
             ispravniPodaci = false;
             ikona.setBackgroundColor(Color.RED);
+            ikona.setError("Morate unijeti ikonu");
         }
 
         return ispravniPodaci;
@@ -130,22 +126,38 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
 
     @Override
     public void onReceiveResult(int resultCode, Bundle resultData) {
-        if (resultCode == GetRequestIntentService.KATEGORIJE_UPDATE) {
-            ArrayList<Kategorija> noveKategorije = (ArrayList<Kategorija>) resultData.getSerializable("kategorije");
+        if (resultData != null) {
+            if (resultCode == GetRequestIntentService.KATEGORIJE_UPDATE) {
+                azuriraneKategorije = new ArrayList<>();
+                azuriraneKategorije.addAll((ArrayList<Kategorija>) resultData.getSerializable("kategorije"));
 
-            kategorije.clear();
-            kategorije.add(new Kategorija("Svi", "-1"));
-            kategorije.addAll(noveKategorije);
+                kategorija = new Kategorija(trenutniNaziv, trenutnaIkona);
+
+                for (Kategorija k : azuriraneKategorije) {
+                    if (k.getNaziv().equals(kategorija.getNaziv())) {
+                        nazivKategorije.setError("Kategorija vec postoji");
+                        return;
+                    }
+                }
+
+                vratiKategorijuUPrethodnuAktivnost();
+            }
         }
     }
 
     private void vratiKategorijuUPrethodnuAktivnost() {
-        Kategorija kategorija = new Kategorija(nazivKategorije.getText().toString(), ikona.getText().toString());
-
         Intent intent = new Intent();
         intent.putExtra("kategorija", kategorija);
-        intent.putExtra("kategorije", kategorije);
-        setResult(2, intent);
+        intent.putExtra("kategorije", azuriraneKategorije);
+        setResult(DodajKvizAkt.ADDED_KATEGORIJA, intent);
+        finish();
+    }
+
+    @Override
+    public void onBackPressed() {
+        Intent intent = new Intent();
+        intent.putExtra("kategorije", azuriraneKategorije);
+        setResult(DodajKvizAkt.BACK_FROM_KATEGORIJE, intent);
         finish();
     }
 
@@ -157,4 +169,5 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
             ocistiBoje();
         }
     }
+
 }

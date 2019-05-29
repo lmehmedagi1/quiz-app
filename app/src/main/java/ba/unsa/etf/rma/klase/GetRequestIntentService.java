@@ -26,6 +26,12 @@ public class GetRequestIntentService extends IntentService {
     public static final int RANGLISTE_UPDATE = 40;
     public static final int ODABRANA_KATEGORIJA = 50;
 
+    public static final int AKCIJA_KVIZOVI = 11;
+    public static final int AKCIJA_PITANJA = 12;
+    public static final int AKCIJA_KATEGORIJE = 13;
+    public static final int AKCIJA_RANGLISTE = 14;
+    public static final int AKCIJA_ODABRANA_KATEGORIJA = 15;
+
     private HttpURLConnection connection = null;
     private URL url = null;
     private String token = "";
@@ -51,6 +57,8 @@ public class GetRequestIntentService extends IntentService {
             final ResultReceiver receiver = intent.getParcelableExtra("receiver");
             Bundle bundle = new Bundle();
 
+            int akcija = intent.getIntExtra("akcija", 0);
+
             boolean trebaKvizove       = intent.getBooleanExtra("trebaKvizove", false);
             boolean trebaKategorije    = intent.getBooleanExtra("trebaKategorije", false);
             boolean trebaPitanja       = intent.getBooleanExtra("trebaPitanja", false);
@@ -61,7 +69,7 @@ public class GetRequestIntentService extends IntentService {
             token = intent.getStringExtra("TOKEN");
 
             try {
-                if (trebaKvizove) {
+                if (akcija == AKCIJA_KVIZOVI) {
                     ArrayList<Pitanje> pitanja = new ArrayList<>();
                     ArrayList<Kategorija> kategorije = new ArrayList<>();
 
@@ -84,7 +92,7 @@ public class GetRequestIntentService extends IntentService {
 
                     receiver.send(KVIZOVI_UPDATE, bundle);
                 }
-                else if (odabranaKategorija) {
+                else if (akcija == AKCIJA_ODABRANA_KATEGORIJA) {
                     Kategorija odabrana = (Kategorija) intent.getSerializableExtra("kategorija");
 
                     urlString = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Pitanja?access_token=";
@@ -96,21 +104,21 @@ public class GetRequestIntentService extends IntentService {
                     bundle.putSerializable("kvizovi", dajKvizoveIzKategorije(odabrana, pitanja));
                     receiver.send(ODABRANA_KATEGORIJA, bundle);
                 }
-                else if (trebaKategorije) {
+                else if (akcija == AKCIJA_KATEGORIJE) {
                     urlString = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Kategorije?access_token=";
                     url = new URL(urlString + URLEncoder.encode(token, "UTF-8"));
                     result = getResponse("", true);
                     bundle.putSerializable("kategorije", ucitajKategorije(result));
                     receiver.send(KATEGORIJE_UPDATE, bundle);
                 }
-                else if (trebaPitanja) {
+                else if (akcija == AKCIJA_PITANJA) {
                     urlString = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Pitanja?access_token=";
                     url = new URL(urlString + URLEncoder.encode(token, "UTF-8"));
                     result = getResponse("", true);
                     bundle.putSerializable("pitanja", ucitajPitanja(result));
                     receiver.send(PITANJA_UPDATE, bundle);
                 }
-                else if (trebaRangliste) {
+                else if (akcija == AKCIJA_RANGLISTE) {
                     urlString = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Rangliste?access_token=";
                     url = new URL(urlString + URLEncoder.encode(token, "UTF-8"));
                     result = getResponse("", true);
@@ -175,7 +183,6 @@ public class GetRequestIntentService extends IntentService {
         String[] pitanjeCollection = result.split("\\{\n\"name\": ");
 
         for (int i = 1; i < pitanjeCollection.length; i++) {
-            Log.wtf("TAGELEMENTID", pitanjeCollection[i]);
 
             String pitanjeDocument = pitanjeCollection[i];
 
@@ -219,7 +226,6 @@ public class GetRequestIntentService extends IntentService {
         String[] kategorijaCollection = result.split("\\{\n\"name\": ");
 
         for (int i = 1; i < kategorijaCollection.length; i++) {
-            Log.wtf("TAGELEMENTID", kategorijaCollection[i]);
 
             String kategorijaDocument = kategorijaCollection[i];
             String[] rows = kategorijaDocument.split("\n");
@@ -251,7 +257,6 @@ public class GetRequestIntentService extends IntentService {
         String[] kvizCollection = result.split("\\{\n\"name\": ");
 
         for (int i = 1; i < kvizCollection.length; i++) {
-            Log.wtf("TAGELEMENTID", kvizCollection[i]);
 
             String kvizDocument = kvizCollection[i];
 
@@ -330,8 +335,6 @@ public class GetRequestIntentService extends IntentService {
 
             reader.close();
             streamReader.close();
-
-            Log.wtf("OUTPUTTTTTTTT",stringBuilder.toString());
 
             return stringBuilder.toString();
         }

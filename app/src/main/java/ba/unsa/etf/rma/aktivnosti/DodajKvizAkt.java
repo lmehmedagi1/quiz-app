@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.StringTokenizer;
 import java.util.UUID;
 
@@ -42,6 +43,8 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
     public static final int ADDED_PITANJE = 65;
     public static final int ADDED_KATEGORIJA = 75;
 
+    public static final int IMPORT_QUIZ = 85;
+
     private ListView listaDodanihPitanja;
     private ListView listaMogucihPitanja;
     private Button dodajKvizButton;
@@ -61,8 +64,6 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
     private ArrayAdapter<Pitanje> mogucaPitanjaAdapter = null;
 
     private View elementZaDodavanje;
-    private String odabranaKategorija;
-    private int trenutnaKategorija;
 
     private boolean izmjena = false;
     private String imeOdabranogKviza;
@@ -70,6 +71,9 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
     private String TOKEN = "";
     private GetRequestResultReceiver receiver = null;
 
+    private String trenutniNaziv = "";
+    private Kategorija trenutnaKategorija = null;
+    private ArrayList<Pitanje> trenutnoDodanaPitanja = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,10 +83,6 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
         // da tastatura ne pomjeri layout
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
-        receiver = new GetRequestResultReceiver(new Handler());
-        receiver.setReceiver(this);
-        uzmiSvaPitanja();
-
         listaDodanihPitanja = (ListView) findViewById(R.id.lvDodanaPitanja);
         listaMogucihPitanja = (ListView) findViewById(R.id.lvMogucaPitanja);
         dodajKvizButton = (Button) findViewById(R.id.btnDodajKviz);
@@ -91,14 +91,10 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
         importButton = (Button) findViewById(R.id.btnImportKviz);
 
         Intent intent = getIntent();
-
-        TOKEN = intent.getStringExtra("token");
-        kviz = (Kviz)intent.getSerializableExtra("kviz");
+        TOKEN      = intent.getStringExtra("token");
+        kviz       = (Kviz)intent.getSerializableExtra("kviz");
         kategorije = (ArrayList<Kategorija>)intent.getSerializableExtra("kategorije");
         kategorije.add(new Kategorija("Dodaj kategoriju", "Dodaj kategoriju"));
-
-        dodajDodanaPitanja();
-        dodajMogucaPitanja();
 
         kategorijaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, kategorije);
         kategorijaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -113,6 +109,10 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
         listaDodanihPitanja.setAdapter(dodanaPitanjaAdapter);
         listaMogucihPitanja.setAdapter(mogucaPitanjaAdapter);
 
+        receiver = new GetRequestResultReceiver(new Handler());
+        receiver.setReceiver(this);
+        uzmiSvaPitanja();
+
         dodajNazivKviza();
         dodajKategorijuKviza();
 
@@ -125,7 +125,7 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
     private void uzmiSvaPitanja() {
         Intent intent = new Intent(Intent.ACTION_SYNC, null, this, GetRequestIntentService.class);
         intent.putExtra("TOKEN", TOKEN);
-        intent.putExtra("trebaPitanja", true);
+        intent.putExtra("akcija", GetRequestIntentService.AKCIJA_PITANJA);
         intent.putExtra("receiver", receiver);
         startService(intent);
     }
@@ -155,11 +155,10 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
                 if (kategorije.get(i).getNaziv().equals(kviz.getKategorija().getNaziv())) {
                     spinner.setSelection(i);
                     kategorijaAdapter.notifyDataSetChanged();
-                    trenutnaKategorija = i;
                 }
         }
         else
-            trenutnaKategorija = 0;
+            spinner.setSelection(0);
     }
     private void dodajNazivKviza() {
         if (kviz != null) {
@@ -175,6 +174,26 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
             if (resultCode == GetRequestIntentService.PITANJA_UPDATE) {
                 svaPitanja.clear();
                 svaPitanja.addAll((ArrayList<Pitanje>) resultData.getSerializable("pitanja"));
+
+                dodajDodanaPitanja();
+                dodajMogucaPitanja();
+
+                dodanaPitanjaAdapter = new PitanjeAdapter(this, dodanaPitanja);
+                listaDodanihPitanja.setAdapter(dodanaPitanjaAdapter);
+                mogucaPitanjaAdapter.notifyDataSetChanged();
+            }
+            else if (resultCode == GetRequestIntentService.KVIZOVI_UPDATE) {
+                kvizovi.clear();
+                kvizovi.addAll((ArrayList<Kviz>) resultData.getSerializable("kvizovi"));
+
+                for (Kviz k : kvizovi) {
+                    if ((!izmjena || !trenutniNaziv.equals(imeOdabranogKviza)) && k.getNaziv().equals(trenutniNaziv)) {
+                        nazivKviza.setError("Kviz vec postoji");
+                        nazivKviza.setBackgroundColor(Color.RED);
+                        return;
+                    }
+                }
+                dodajKviz();
             }
         }
     }
@@ -198,10 +217,7 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
 
                 if (odabrana.equals("Dodaj kategoriju"))
                     otvoriAktivnostZaDodavanjeKategorije();
-                else {
-                    odabranaKategorija = odabrana;
-                    trenutnaKategorija = position;
-                }
+
                 ocistiBoje();
             }
             public void onNothingSelected(AdapterView<?> parent) {
@@ -215,30 +231,32 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
             @Override
             public void onClick(View v) {
                 if (!validniPodaci()) return;
-                dodajKviz();
+                trenutniNaziv = nazivKviza.getText().toString();
+                trenutnaKategorija = (Kategorija) spinner.getSelectedItem();
+                trenutnoDodanaPitanja = new ArrayList<>();
+                trenutnoDodanaPitanja.addAll(dodanaPitanja);
+                uzmiSveKvizove();
             }
         });
         importButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // ACTION_OPEN_DOCUMENT is the intent to choose a file via the system's file
-                // browser.
                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-
-                // Filter to only show results that can be "opened", such as a
-                // file (as opposed to a list of contacts or timezones)
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
-
-                // Filter to show only images, using the image MIME data type.
-                // If one wanted to search for ogg vorbis files, the type would be "audio/ogg".
-                // To search for all documents available via installed storage providers,
-                // it would be "*/*".
                 intent.setType("text/*");
-
-                startActivityForResult(intent, 42);
+                startActivityForResult(intent, IMPORT_QUIZ);
             }
         });
     }
+
+    private void uzmiSveKvizove() {
+        Intent intent = new Intent(Intent.ACTION_SYNC, null, this, GetRequestIntentService.class);
+        intent.putExtra("TOKEN", TOKEN);
+        intent.putExtra("akcija", GetRequestIntentService.AKCIJA_KVIZOVI);
+        intent.putExtra("receiver", receiver);
+        startService(intent);
+    }
+
     private void dodajListenerNaListe() {
         odabranElementListe(listaDodanihPitanja, mogucaPitanja, dodanaPitanja);
         odabranElementListe(listaMogucihPitanja, dodanaPitanja, mogucaPitanja);
@@ -261,36 +279,26 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
             idDokumenta = kviz.getIdDokumenta();
         }
 
-        kviz = new Kviz(nazivKviza.getText().toString(), dodanaPitanja, (Kategorija) spinner.getSelectedItem());
+        kviz = new Kviz(trenutniNaziv, trenutnoDodanaPitanja, trenutnaKategorija);
         kviz.setIdDokumenta(idDokumenta);
         intent.putExtra("kviz", kviz);
         intent.putExtra("odabraniKviz", imeOdabranogKviza);
+        intent.putExtra("kvizovi", kvizovi);
 
         kategorije.remove(kategorije.size()-1);
         intent.putExtra("kategorije", kategorije);
-        intent.putExtra("dodanaPitanja", dodanaPitanja);
-        intent.putExtra("mogucaPitanja", mogucaPitanja);
-        setResult(10, intent);
 
+        setResult(KvizoviAkt.ADDED_KVIZ, intent);
         finish();
     }
 
     private boolean validniPodaci() {
-        boolean ispravniPodaci = true;
-
         if (nazivKviza.getText() == null || nazivKviza.getText().toString().length() == 0) {
             nazivKviza.setBackgroundColor(Color.RED);
-            ispravniPodaci = false;
+            nazivKviza.setError("Morate unijeti naziv kviza");
+            return false;
         }
-        else if (!izmjena || (izmjena && !nazivKviza.getText().toString().equals(imeOdabranogKviza))) {   //ili dodavanje ili promjena trenutnog kviza
-            for (Kviz k : kvizovi) {
-                if (nazivKviza.getText().toString().equals(k.getNaziv())) {
-                    nazivKviza.setBackgroundColor(Color.RED);
-                    ispravniPodaci = false;
-                }
-            }
-        }
-        return ispravniPodaci;
+        return true;
     }
 
     private void odabranElementListe(ListView lista, final ArrayList<Pitanje> trenutnaPitanja, final ArrayList<Pitanje> odredisnaPitanja) {
@@ -313,13 +321,13 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
         Intent intent = new Intent(DodajKvizAkt.this, DodajPitanjeAkt.class);
         intent.putExtra("token", TOKEN);
         intent.putExtra("dodanaPitanja", dodanaPitanja);
-        DodajKvizAkt.this.startActivityForResult(intent, 1);
+        DodajKvizAkt.this.startActivityForResult(intent, ADDED_PITANJE);
     }
 
     private void otvoriAktivnostZaDodavanjeKategorije() {
         Intent intent = new Intent(DodajKvizAkt.this, DodajKategorijuAkt.class);
-        intent.putExtra("kategorije", kategorije);
-        DodajKvizAkt.this.startActivityForResult(intent, 2);
+        intent.putExtra("TOKEN", TOKEN);
+        DodajKvizAkt.this.startActivityForResult(intent, ADDED_KATEGORIJA);
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -327,7 +335,7 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
         if (requestCode == ADDED_PITANJE) {
             if (resultCode == ADDED_PITANJE) {
                 Pitanje pitanje = (Pitanje)data.getSerializableExtra("pitanje");
-                ArrayList<Pitanje> azuriranaPitanja = (ArrayList<Pitanje>) data.getSerializableExtra("pitanja");
+                ArrayList<Pitanje> azuriranaPitanja = (ArrayList<Pitanje>) data.getSerializableExtra("azuriranaPitanja");
 
                 mogucaPitanja.clear();
                 mogucaPitanja.addAll(azuriranaPitanja);
@@ -336,7 +344,7 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
                 dodajPitanje(pitanje);
             }
             else if (resultCode == BACK_FROM_PITANJA) {
-                ArrayList<Pitanje> azuriranaPitanja = (ArrayList<Pitanje>) data.getSerializableExtra("pitanja");
+                ArrayList<Pitanje> azuriranaPitanja = (ArrayList<Pitanje>) data.getSerializableExtra("azuriranaPitanja");
 
                 if (azuriranaPitanja != null && azuriranaPitanja.size() != 0) {
                     mogucaPitanja.clear();
@@ -346,21 +354,37 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
 
             }
         }
-        else if (requestCode == 2) {
-            if (resultCode == 2) {
+        else if (requestCode == ADDED_KATEGORIJA) {
+            if (resultCode == ADDED_KATEGORIJA) {
                 Kategorija kategorija = (Kategorija) data.getSerializableExtra("kategorija");
-                ArrayList<Kategorija> noveKategorije = (ArrayList<Kategorija>) data.getSerializableExtra("kategorije");
+
+                Kategorija sviKategorija = new Kategorija("Svi", "-1");
+                sviKategorija.setIdDokumenta("SVIID");
 
                 kategorije.clear();
-                kategorije.addAll(noveKategorije);
+                kategorije.add(sviKategorija);
+                kategorije.addAll((ArrayList<Kategorija>) data.getSerializableExtra("kategorije"));
+                kategorije.add(new Kategorija("Dodaj kategoriju", "Dodaj kategoriju"));
                 kategorijaAdapter.notifyDataSetChanged();
 
                 dodajKategoriju(kategorija);
             }
-            else
+            else if (resultCode == BACK_FROM_KATEGORIJE) {
+                ArrayList<Kategorija> azuriraneKategorije = (ArrayList<Kategorija>) data.getSerializableExtra("kategorije");
+                if (azuriraneKategorije != null && azuriraneKategorije.size() != 0) {
+                    Kategorija sviKategorija = new Kategorija("Svi", "-1");
+                    sviKategorija.setIdDokumenta("SVIID");
+
+                    kategorije.clear();
+                    kategorije.add(sviKategorija);
+                    kategorije.addAll(azuriraneKategorije);
+                    kategorije.add(new Kategorija("Dodaj kategoriju", "Dodaj kategoriju"));
+                    kategorijaAdapter.notifyDataSetChanged();
+                }
                 spinner.setSelection(0);
+            }
         }
-        else if (requestCode == 42  && resultCode == Activity.RESULT_OK) {
+        else if (requestCode == IMPORT_QUIZ  && resultCode == Activity.RESULT_OK) {
             Uri uri = null;
             if (data != null) {
                 uri = data.getData();
@@ -496,7 +520,10 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
                 dodajKategoriju(kategorija);
             }
 
-            postaviKategoriju(kategorija);
+            for (int k = 0; k<kategorije.size(); k++) {
+                if (kategorije.get(k).getNaziv().equals(kategorija.getNaziv()))
+                    spinner.setSelection(k);
+            }
 
             // sta se treba desiti sa starim pitanjima i sa mogucim
             dodanaPitanja.clear();
@@ -507,13 +534,6 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
         }
         catch (Exception e) {
             izbaciAlert("Datoteka kviza kojeg importujete nema ispravan format!");
-        }
-    }
-
-    private void postaviKategoriju(Kategorija kategorija) {
-        for (int i = 0; i<kategorije.size(); i++) {
-            if (kategorije.get(i).getNaziv().equals(kategorija.getNaziv()))
-                spinner.setSelection(i);
         }
     }
 
@@ -556,7 +576,7 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
         kategorije.add(new Kategorija("Dodaj kategoriju", "Dodaj kategoriju"));
         kategorijaAdapter.notifyDataSetChanged();
 
-        odabranaKategorija = kategorija.getNaziv();
+        spinner.setSelection(kategorije.size()-2);
     }
 
     private void dodajPitanje(Pitanje pitanje) {
@@ -594,12 +614,9 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
     public void onBackPressed() {
 
         Intent intent = new Intent();
-
         kategorije.remove(kategorije.size()-1);
         intent.putExtra("kategorije", kategorije);
-        intent.putExtra("dodanaPitanja", dodanaPitanja);
-        intent.putExtra("mogucaPitanja", mogucaPitanja);
-        setResult(11, intent);
+        setResult(KvizoviAkt.BACK_FROM_DODAJ_KVIZ, intent);
 
         finish();
     }

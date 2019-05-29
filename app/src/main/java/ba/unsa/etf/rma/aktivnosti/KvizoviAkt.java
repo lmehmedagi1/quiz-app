@@ -30,6 +30,9 @@ import ba.unsa.etf.rma.klase.Pitanje;
 
 public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdListeFrag, GetRequestResultReceiver.Receiver {
 
+    public static final int BACK_FROM_DODAJ_KVIZ = 105;
+    public static final int ADDED_KVIZ = 115;
+
     private KvizAdapter kvizAdapter = null;
     private ArrayAdapter<Kategorija> kategorijaAdapter = null;
 
@@ -139,11 +142,19 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
                 kategorije.clear();
                 kategorije.add(kategorijaSvi);
                 kategorije.addAll(noveKategorije);
-                kategorijaAdapter.notifyDataSetChanged();
 
                 kvizovi.clear();
                 kvizovi.addAll(noviKvizovi);
-                kvizAdapter = new KvizAdapter(getBaseContext(), noviKvizovi);
+
+                if (dpwidth >= 550) {
+                    listaFrag.azurirajKategorije(kategorije);
+                    detailFrag.azurirajKvizove(kvizovi);
+                    return;
+                }
+
+                kategorijaAdapter.notifyDataSetChanged();
+
+                kvizAdapter = new KvizAdapter(getBaseContext(), kvizovi);
                 listaKvizova.setAdapter(kvizAdapter);
                 kvizAdapter.notifyDataSetChanged();
             }
@@ -151,21 +162,26 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
                 ArrayList<Kviz> noviKvizovi = (ArrayList<Kviz>) resultData.getSerializable("kvizovi");
                 kvizovi.clear();
                 kvizovi.addAll(noviKvizovi);
+
+                if (dpwidth >= 550) {
+                    detailFrag.azurirajKvizove(kvizovi);
+                    return;
+                }
+
                 kvizAdapter = new KvizAdapter(getBaseContext(), kvizovi);
                 listaKvizova.setAdapter(kvizAdapter);
             }
         }
     }
 
-    private void azurirajPodatke(Kategorija odabrana) {
+    public void azurirajPodatke(Kategorija odabrana) {
         Intent intent = new Intent(Intent.ACTION_SYNC, null, this, GetRequestIntentService.class);
         intent.putExtra("TOKEN", TOKEN);
 
         if (odabrana == null || odabrana.getIdDokumenta().equals("SVIID"))
-            intent.putExtra("trebaKvizove", true);
+            intent.putExtra("akcija", GetRequestIntentService.AKCIJA_KVIZOVI);
         else {
-            intent.putExtra("trebaKvizove", false);
-            intent.putExtra("odabranaKategorija", true);
+            intent.putExtra("akcija", GetRequestIntentService.AKCIJA_ODABRANA_KATEGORIJA);
             intent.putExtra("kategorija", odabrana);
         }
         intent.putExtra("receiver", receiver);
@@ -219,7 +235,7 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         intent.putExtra("kategorije", kategorije);
         intent.putExtra("kviz", odabraniKviz);
         intent.putExtra("token", TOKEN);
-        KvizoviAkt.this.startActivityForResult(intent, 10);
+        KvizoviAkt.this.startActivityForResult(intent, ADDED_KVIZ);
     }
 
     private void dodajListenerNaSpinner() {
@@ -237,18 +253,20 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 10) {
+        if (requestCode == ADDED_KVIZ) {
 
-            if (resultCode == 10) {
+            if (resultCode == ADDED_KVIZ) {
 
                 Kviz kviz = (Kviz) data.getSerializableExtra("kviz");
-                ArrayList<Kategorija> noveKategorije = (ArrayList<Kategorija>) data.getSerializableExtra("kategorije");
 
                 kategorije.clear();
-                kategorije.addAll(noveKategorije);
+                kategorije.addAll((ArrayList<Kategorija>) data.getSerializableExtra("kategorije"));
+
+                kvizovi.clear();
+                kvizovi.addAll((ArrayList<Kviz>) data.getSerializableExtra("kvizovi"));
 
                 if (dpwidth >= 550)
-                    listaFrag.azurirajKategorije(noveKategorije);
+                    listaFrag.azurirajKategorije(kategorije);
                 else
                     kategorijaAdapter.notifyDataSetChanged();
 
@@ -262,29 +280,18 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
                             kvizovi.set(i, kviz);
 
                             dodajKviz(kvizovi.get(i));
-
-                            if (dpwidth >= 550) {
-                                detailFrag.azurirajKvizove(kvizovi);
-                                return;
-                            }
-                            kvizAdapter.notifyDataSetChanged();
-                            kvizAdapter = new KvizAdapter(getBaseContext(), kvizovi);
-                            listaKvizova.setAdapter(kvizAdapter);
-                            return;
                         }
                     }
                 }
                 else
                     dodajKviz(kviz);
             }
-            else if (resultCode == 11) {
-                ArrayList<Kategorija> noveKategorije = (ArrayList<Kategorija>) data.getSerializableExtra("kategorije");
+            else if (resultCode == BACK_FROM_DODAJ_KVIZ) {
                 kategorije.clear();
-                kategorije.addAll(noveKategorije);
-
+                kategorije.addAll((ArrayList<Kategorija>) data.getSerializableExtra("kategorije"));
 
                 if (dpwidth >= 550)
-                    listaFrag.azurirajKategorije(noveKategorije);
+                    listaFrag.azurirajKategorije(kategorije);
                 else
                     kategorijaAdapter.notifyDataSetChanged();
             }
@@ -310,8 +317,6 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         }
         dokument.append("]}}}}");
 
-        Log.wtf("TOKEN", TOKEN);
-
         HttpPatchRequest patchRequest = new HttpPatchRequest();
         patchRequest.execute(url, TOKEN, dokument.toString());
 
@@ -322,12 +327,13 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
 
         kvizAdapter = new KvizAdapter(getBaseContext(), kvizovi);
         listaKvizova.setAdapter(kvizAdapter);
+        kvizAdapter.notifyDataSetChanged();
     }
 
 
     @Override
-    public void porukaOdListeFrag(String nazivKategorije) {
-        detailFrag.primiPorukuOdListeFrag(nazivKategorije);
+    public void porukaOdListeFrag(Kategorija kategorija) {
+        detailFrag.primiPorukuOdListeFrag(kategorija);
     }
 
 

@@ -38,9 +38,7 @@ public class DetailFrag extends Fragment {
         view = inflater.inflate(R.layout.fragment_detail, container, false);
 
         gridKvizovi = (GridView) view.findViewById(R.id.gridKvizovi);
-
-        Bundle bundle = this.getArguments();
-        kvizovi = (ArrayList<Kviz>) bundle.getSerializable("kvizovi");
+        kvizovi = new ArrayList<>();
 
         Log.wtf("DETAIL", "Pozvan je on create view fragmenta detail" + String.valueOf(kvizovi.size()));
 
@@ -53,13 +51,6 @@ public class DetailFrag extends Fragment {
         super.onActivityCreated(savedInstanceState);
 
         if (view == null) return;
-
-        Log.wtf("Activity create", "Pozvat je on activity created" + String.valueOf(kvizovi.size()));
-
-        kvizAdapter = new GridViewAdapter(view.getContext(), kvizovi);
-        gridKvizovi.setAdapter(kvizAdapter);
-
-        azurirajKvizove(kvizovi);
 
         dodajListenerNaGrid();
     }
@@ -89,16 +80,8 @@ public class DetailFrag extends Fragment {
         });
     }
 
-    public void primiPorukuOdListeFrag(String nazivKategorije) {
-        ArrayList<Kviz> noviKvizovi = new ArrayList<>();
-
-        for (Kviz k : kvizovi) {
-            if (k.getKategorija().getNaziv().equals(nazivKategorije) || nazivKategorije.equals("Svi") || k.getNaziv().equals("Dodaj kviz"))
-                noviKvizovi.add(k);
-        }
-
-        kvizAdapter = new GridViewAdapter(view.getContext(), noviKvizovi);
-        gridKvizovi.setAdapter(kvizAdapter);
+    public void primiPorukuOdListeFrag(Kategorija kategorija) {
+        ((KvizoviAkt)getActivity()).azurirajPodatke(kategorija);
     }
 
     public void azurirajKvizove(ArrayList<Kviz> noviKvizovi) {
@@ -118,6 +101,7 @@ public class DetailFrag extends Fragment {
             noviKvizovi.add(new Kviz("Dodaj kviz", null, new Kategorija("-10", "-10")));
 
         kvizovi = noviKvizovi;
-        primiPorukuOdListeFrag("Svi");
+        kvizAdapter = new GridViewAdapter(view.getContext(), kvizovi);
+        gridKvizovi.setAdapter(kvizAdapter);
     }
 }
