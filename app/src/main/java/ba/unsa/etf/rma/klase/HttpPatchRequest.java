@@ -44,7 +44,6 @@ public class HttpPatchRequest extends AsyncTask<String, Void, Void> {
                 os.write(input, 0, input.length);
             }
 
-            int code = connection.getResponseCode();
             InputStream odgovor = connection.getInputStream();
 
             try (BufferedReader br  = new BufferedReader(new InputStreamReader(odgovor, StandardCharsets.UTF_8))) {

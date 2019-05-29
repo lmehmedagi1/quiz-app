@@ -70,7 +70,7 @@ public class DetailFrag extends Fragment {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Kviz odabraniKviz = (Kviz) parent.getItemAtPosition(position);
                 if (odabraniKviz.getNaziv().equals("Dodaj kviz"))
-                    ((KvizoviAkt)getActivity()).otvoriNovuAktivnost(null);
+                    ((KvizoviAkt)getActivity()).otvoriAktivnostZaDodavanjeKviza(null);
                 else
                     ((KvizoviAkt)getActivity()).otvoriAktivnostZaIgranjeKviza(odabraniKviz);
             }
@@ -81,9 +81,9 @@ public class DetailFrag extends Fragment {
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 Kviz odabraniKviz = (Kviz) parent.getItemAtPosition(position);
                 if (odabraniKviz.getNaziv().equals("Dodaj kviz"))
-                    ((KvizoviAkt)getActivity()).otvoriNovuAktivnost(null);
+                    ((KvizoviAkt)getActivity()).otvoriAktivnostZaDodavanjeKviza(null);
                 else
-                    ((KvizoviAkt)getActivity()).otvoriNovuAktivnost(odabraniKviz);
+                    ((KvizoviAkt)getActivity()).otvoriAktivnostZaDodavanjeKviza(odabraniKviz);
                 return true;
             }
         });

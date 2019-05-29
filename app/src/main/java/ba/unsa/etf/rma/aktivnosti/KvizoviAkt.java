@@ -1,6 +1,7 @@
 package ba.unsa.etf.rma.aktivnosti;
 
 import android.content.Intent;
+import android.os.Handler;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -19,14 +20,15 @@ import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.fragmenti.DetailFrag;
 import ba.unsa.etf.rma.fragmenti.ListaFrag;
 import ba.unsa.etf.rma.klase.AccessToken;
-import ba.unsa.etf.rma.klase.HttpGetRequest;
+import ba.unsa.etf.rma.klase.GetRequestIntentService;
+import ba.unsa.etf.rma.klase.GetRequestResultReceiver;
 import ba.unsa.etf.rma.klase.HttpPatchRequest;
 import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.klase.KvizAdapter;
 import ba.unsa.etf.rma.klase.Pitanje;
 
-public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdListeFrag {
+public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdListeFrag, GetRequestResultReceiver.Receiver {
 
     private KvizAdapter kvizAdapter = null;
     private ArrayAdapter<Kategorija> kategorijaAdapter = null;
@@ -36,7 +38,6 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
 
     private ArrayList<Kviz> kvizovi = new ArrayList<>();
     private ArrayList<Kategorija> kategorije = new ArrayList<>();
-    private ArrayList<Pitanje> pitanja = new ArrayList<>();
 
     private View elementZaDodavanje;
 
@@ -49,62 +50,33 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
     private float dpwidth = 0;
 
     private String TOKEN = "";
+    private GetRequestResultReceiver receiver = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_kvizovi_akt);
 
-        Log.wtf("ONCRETAE", "Pozvan je on create");
-
-        if (savedInstanceState != null) {
-            Log.wtf("SAVEDINSTANCE", "Saved instance nije null");
-
-            kvizovi = (ArrayList<Kviz>) savedInstanceState.getSerializable("kvizovi");
-            kategorije = (ArrayList<Kategorija>) savedInstanceState.getSerializable("kategorije");
-            pitanja = (ArrayList<Pitanje>) savedInstanceState.getSerializable("pitanja");
-
-            for (int i = 0; i<kvizovi.size(); i++) {
-                if (kvizovi.get(i).getNaziv().equals("Dodaj kviz")) {
-                    kvizovi.remove(i);
-                    i--;
-                }
-            }
-        }
-
+        Log.wtf("create", "POZVAN ON CREATEEEE");
 
         try {
             AccessToken accessToken = new AccessToken();
             accessToken.execute(this);
             TOKEN = accessToken.get();
-            System.out.print(TOKEN);
-
-            if (savedInstanceState == null) {
-                Log.wtf("HTTP", "Ucitavaju se vrijednosti iz baze");
-
-                HttpGetRequest getRequest = new HttpGetRequest();
-                ArrayList<Object> result = getRequest.execute(TOKEN, "pokretanje aplikacije").get();
-
-                kategorije.add(new Kategorija("Svi", "-1"));
-
-                kvizovi = (ArrayList<Kviz>) result.get(0);
-                kategorije.addAll((ArrayList<Kategorija>) result.get(1));
-                pitanja = (ArrayList<Pitanje>) result.get(2);
-            }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        Log.wtf("PITANJAA", "U onCreatu BROJ PITANJE JE" + String.valueOf(pitanja.size()));
+        receiver = new GetRequestResultReceiver(new Handler());
+        receiver.setReceiver(this);
 
+        azurirajPodatke(null);
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         dpwidth = displayMetrics.widthPixels / displayMetrics.density;
 
         if (dpwidth >= 550) {
-            Log.wtf("HTTP", "Sirok displej");
             FragmentManager manager = getSupportFragmentManager();
 
             detailFrag = (DetailFrag) manager.findFragmentByTag(DETALJI_TAG);
@@ -135,8 +107,6 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
 
         }
         else {
-            Log.wtf("HTTP", " NIJE Sirok displej");
-
             listaKvizova = (ListView) findViewById(R.id.lvKvizovi);
             spinner = (Spinner) findViewById(R.id.spPostojeceKategorije);
 
@@ -156,6 +126,52 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         }
     }
 
+    @Override
+    public void onReceiveResult(int resultCode, Bundle resultData) {
+        if (resultData != null) {
+            if (resultCode == GetRequestIntentService.KVIZOVI_UPDATE) {
+                ArrayList<Kategorija> noveKategorije = (ArrayList<Kategorija>) resultData.getSerializable("kategorije");
+                ArrayList<Kviz> noviKvizovi          = (ArrayList<Kviz>) resultData.getSerializable("kvizovi");
+
+                Kategorija kategorijaSvi = new Kategorija("Svi", "-1");
+                kategorijaSvi.setIdDokumenta("SVIID");
+
+                kategorije.clear();
+                kategorije.add(kategorijaSvi);
+                kategorije.addAll(noveKategorije);
+                kategorijaAdapter.notifyDataSetChanged();
+
+                kvizovi.clear();
+                kvizovi.addAll(noviKvizovi);
+                kvizAdapter = new KvizAdapter(getBaseContext(), noviKvizovi);
+                listaKvizova.setAdapter(kvizAdapter);
+                kvizAdapter.notifyDataSetChanged();
+            }
+            else if (resultCode == GetRequestIntentService.ODABRANA_KATEGORIJA) {
+                ArrayList<Kviz> noviKvizovi = (ArrayList<Kviz>) resultData.getSerializable("kvizovi");
+                kvizovi.clear();
+                kvizovi.addAll(noviKvizovi);
+                kvizAdapter = new KvizAdapter(getBaseContext(), kvizovi);
+                listaKvizova.setAdapter(kvizAdapter);
+            }
+        }
+    }
+
+    private void azurirajPodatke(Kategorija odabrana) {
+        Intent intent = new Intent(Intent.ACTION_SYNC, null, this, GetRequestIntentService.class);
+        intent.putExtra("TOKEN", TOKEN);
+
+        if (odabrana == null || odabrana.getIdDokumenta().equals("SVIID"))
+            intent.putExtra("trebaKvizove", true);
+        else {
+            intent.putExtra("trebaKvizove", false);
+            intent.putExtra("odabranaKategorija", true);
+            intent.putExtra("kategorija", odabrana);
+        }
+        intent.putExtra("receiver", receiver);
+        startService(intent);
+    }
+
     private void dodajListenerNaListu() {
         listaKvizova.setOnItemClickListener(new AdapterView.OnItemClickListener()
         {
@@ -169,14 +185,14 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         elementZaDodavanje.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                otvoriNovuAktivnost(null);
+                otvoriAktivnostZaDodavanjeKviza(null);
             }
         });
 
         elementZaDodavanje.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                otvoriNovuAktivnost(null);
+                otvoriAktivnostZaDodavanjeKviza(null);
                 return true;
             }
         });
@@ -185,7 +201,7 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
             @Override
             public boolean onItemLongClick(AdapterView<?> adapter, View arg1, int position, long id) {
                 Kviz odabraniKviz = (Kviz)adapter.getItemAtPosition(position);
-                otvoriNovuAktivnost(odabraniKviz);
+                otvoriAktivnostZaDodavanjeKviza(odabraniKviz);
                 return true;
             }
         });
@@ -198,13 +214,9 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         KvizoviAkt.this.startActivityForResult(intent, 20);
     }
 
-    public void otvoriNovuAktivnost(Kviz odabraniKviz) {
-        Log.wtf("PITANJAA", "U otvaranju nove aktivnosti broj pitanja je" + String.valueOf(pitanja.size()));
-
+    public void otvoriAktivnostZaDodavanjeKviza(Kviz odabraniKviz) {
         Intent intent = new Intent(KvizoviAkt.this, DodajKvizAkt.class);
-        intent.putExtra("kvizovi", kvizovi);
         intent.putExtra("kategorije", kategorije);
-        intent.putExtra("pitanja", pitanja);
         intent.putExtra("kviz", odabraniKviz);
         intent.putExtra("token", TOKEN);
         KvizoviAkt.this.startActivityForResult(intent, 10);
@@ -213,7 +225,9 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
     private void dodajListenerNaSpinner() {
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                refreshList();
+                Kategorija odabrana = (Kategorija) spinner.getSelectedItem();
+                if (odabrana != null)
+                    azurirajPodatke(odabrana);
             }
             public void onNothingSelected(AdapterView<?> parent) {
                 spinner.setSelection(0);
@@ -227,20 +241,11 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
 
             if (resultCode == 10) {
 
-                Log.wtf("PITANJAA", "Dok dodajem kviz broj pitanja je " + String.valueOf(pitanja.size()));
-
-
                 Kviz kviz = (Kviz) data.getSerializableExtra("kviz");
                 ArrayList<Kategorija> noveKategorije = (ArrayList<Kategorija>) data.getSerializableExtra("kategorije");
-                ArrayList<Pitanje> novaPitanja = (ArrayList<Pitanje>) data.getSerializableExtra("dodanaPitanja");
-                novaPitanja.addAll((ArrayList<Pitanje>) data.getSerializableExtra("mogucaPitanja"));
-                pitanja.clear();
-                pitanja.addAll(novaPitanja);
+
                 kategorije.clear();
                 kategorije.addAll(noveKategorije);
-
-                Log.wtf("PITANJAA", "Ali sad ih ima "+ String.valueOf(pitanja.size()));
-
 
                 if (dpwidth >= 550)
                     listaFrag.azurirajKategorije(noveKategorije);
@@ -263,7 +268,8 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
                                 return;
                             }
                             kvizAdapter.notifyDataSetChanged();
-                            refreshList();
+                            kvizAdapter = new KvizAdapter(getBaseContext(), kvizovi);
+                            listaKvizova.setAdapter(kvizAdapter);
                             return;
                         }
                     }
@@ -275,16 +281,6 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
                 ArrayList<Kategorija> noveKategorije = (ArrayList<Kategorija>) data.getSerializableExtra("kategorije");
                 kategorije.clear();
                 kategorije.addAll(noveKategorije);
-
-                Log.wtf("PITANJAA", "Kliknut bek ima ih " +  String.valueOf(pitanja.size()));
-
-
-                ArrayList<Pitanje> novaPitanja = (ArrayList<Pitanje>) data.getSerializableExtra("dodanaPitanja");
-                novaPitanja.addAll((ArrayList<Pitanje>) data.getSerializableExtra("mogucaPitanja"));
-                pitanja.clear();
-                pitanja.addAll(novaPitanja);
-
-                Log.wtf("PITANJAA", "Nakon modifikacije " + String.valueOf(pitanja.size()));
 
 
                 if (dpwidth >= 550)
@@ -324,21 +320,10 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
             return;
         }
 
-        kvizAdapter.notifyDataSetChanged();
-        refreshList();
-    }
-
-    private void refreshList() {
-        String odabranaKategorija = ((Kategorija) spinner.getSelectedItem()).getNaziv();
-        ArrayList<Kviz> kvizoviIzOdabraneKategorije = new ArrayList<>();
-
-        for (Kviz k : kvizovi) {
-            if (odabranaKategorija.equals("Svi") || odabranaKategorija.equals(k.getKategorija().getNaziv()))
-                kvizoviIzOdabraneKategorije.add(k);
-        }
-        kvizAdapter = new KvizAdapter(getBaseContext(), kvizoviIzOdabraneKategorije);
+        kvizAdapter = new KvizAdapter(getBaseContext(), kvizovi);
         listaKvizova.setAdapter(kvizAdapter);
     }
+
 
     @Override
     public void porukaOdListeFrag(String nazivKategorije) {
@@ -351,7 +336,6 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
     public void onSaveInstanceState(Bundle outState) {
         outState.putSerializable("kvizovi", kvizovi);
         outState.putSerializable("kategorije", kategorije);
-        outState.putSerializable("pitanja", pitanja);
         super.onSaveInstanceState(outState);
     }
 }

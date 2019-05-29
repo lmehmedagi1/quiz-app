@@ -3,6 +3,7 @@ package ba.unsa.etf.rma.aktivnosti;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -17,9 +18,11 @@ import android.widget.ListView;
 import java.util.ArrayList;
 
 import ba.unsa.etf.rma.R;
+import ba.unsa.etf.rma.klase.GetRequestIntentService;
+import ba.unsa.etf.rma.klase.GetRequestResultReceiver;
 import ba.unsa.etf.rma.klase.Pitanje;
 
-public class DodajPitanjeAkt extends AppCompatActivity {
+public class DodajPitanjeAkt extends AppCompatActivity implements GetRequestResultReceiver.Receiver {
 
     private EditText pitanjeET;
     private EditText odgovorET;
@@ -29,17 +32,30 @@ public class DodajPitanjeAkt extends AppCompatActivity {
     private Button dodajPitanjeButton;
 
     private ArrayList<String> odgovori = new ArrayList<>();
+    private ArrayList<Pitanje> azuriranaPitanja = new ArrayList<>();
     private ArrayList<Pitanje> dodanaPitanja = new ArrayList<>();
-    private ArrayList<Pitanje> mogucaPitanja = new ArrayList<>();
 
     private ArrayAdapter<String> odgovoriAdapter = null;
 
     private String tacan;
+    private String token = "";
+
+    private Pitanje pitanje = null;
+
+    private GetRequestResultReceiver receiver = null;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dodaj_pitanje_akt);
+
+        receiver = new GetRequestResultReceiver(new Handler());
+        receiver.setReceiver(this);
+
+        Intent intent = getIntent();
+        token = intent.getStringExtra("token");
+        dodanaPitanja = (ArrayList<Pitanje>) intent.getSerializableExtra("dodanaPitanja");
 
         // da tastatura ne pomjeri layout
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
@@ -51,13 +67,8 @@ public class DodajPitanjeAkt extends AppCompatActivity {
         dodajTacanButton = (Button)findViewById(R.id.btnDodajTacan);
         dodajPitanjeButton = (Button)findViewById(R.id.btnDodajPitanje);
 
-        Intent intent = getIntent();
-
-        dodanaPitanja = (ArrayList<Pitanje>)intent.getSerializableExtra("listaDodanih");
-        mogucaPitanja = (ArrayList<Pitanje>)intent.getSerializableExtra("listaMogucih");
 
         odgovoriAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, odgovori);
-
         odgovoriAdapter = (new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, odgovori) {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
@@ -93,12 +104,10 @@ public class DodajPitanjeAkt extends AppCompatActivity {
             }
         });
     }
-
     private void ocistiBoje() {
         odgovorET.setBackgroundColor(0);
         pitanjeET.setBackgroundColor(0);
     }
-
     private void dodajListenerNaListu() {
         listaOdgovora.setOnItemClickListener(new AdapterView.OnItemClickListener()
         {
@@ -121,7 +130,6 @@ public class DodajPitanjeAkt extends AppCompatActivity {
             }
         });
     }
-
     private void dodajListenerNaButtons() {
         dodajOdgovorButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -141,11 +149,55 @@ public class DodajPitanjeAkt extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (!validniPodaci()) return;
-                vratiPitanjeUPrethodnuAktivnost();
+                uzmiSvaPitanja();
             }
         });
 
 
+    }
+
+    private void uzmiSvaPitanja() {
+        Intent intent = new Intent(Intent.ACTION_SYNC, null, this, GetRequestIntentService.class);
+        intent.putExtra("TOKEN", token);
+        intent.putExtra("trebaPitanja", true);
+        intent.putExtra("receiver", receiver);
+        startService(intent);
+    }
+
+    @Override
+    public void onReceiveResult(int resultCode, Bundle resultData) {
+        if (resultData != null) {
+            if (resultCode == GetRequestIntentService.PITANJA_UPDATE) {
+                azuriranaPitanja.clear();
+                azuriranaPitanja.addAll((ArrayList<Pitanje>) resultData.getSerializable("pitanja"));
+
+                pitanje = new Pitanje(pitanjeET.getText().toString(), pitanjeET.getText().toString(), odgovori, tacan);
+
+                boolean validan = true;
+
+                for (int i = 0; i < azuriranaPitanja.size(); i++) {
+                    if (azuriranaPitanja.get(i).getNaziv().equals(pitanje.getNaziv())) {
+                        validan = false;
+                    }
+                    for (Pitanje p : dodanaPitanja) {
+                        if (p.getNaziv().equals(azuriranaPitanja.get(i).getNaziv())) {
+                            azuriranaPitanja.remove(i);
+                            i--;
+                            break;
+                        }
+                    }
+                }
+
+                if (!validan) {
+                    pitanjeET.setError("Pitanje vec postoji");
+                    pitanjeET.setBackgroundColor(Color.RED);
+                    pitanje = null;
+                    return;
+                }
+
+                vratiPitanjeUPrethodnuAktivnost();
+            }
+        }
     }
 
     private boolean validniPodaci() {
@@ -154,30 +206,17 @@ public class DodajPitanjeAkt extends AppCompatActivity {
         String nazivPitanja = pitanjeET.getText().toString();
 
         if (nazivPitanja == null || nazivPitanja.length() == 0) {
+            pitanjeET.setError("Morate unijeti naziv pitanja");
             pitanjeET.setBackgroundColor(Color.RED);
             ispravniPodaci = false;
-        }
-        else {
-            ispravniPodaci = provjeriPitanjeUListi(dodanaPitanja, ispravniPodaci);
-            ispravniPodaci = provjeriPitanjeUListi(mogucaPitanja, ispravniPodaci);
         }
 
         if (tacan == null) {
             ispravniPodaci = false;
+            odgovorET.setError("Mora postojati tacan odgovor");
             odgovorET.setBackgroundColor(Color.RED);
         }
 
-        return ispravniPodaci;
-    }
-
-
-    private boolean provjeriPitanjeUListi(ArrayList<Pitanje> listaPitanja, boolean ispravniPodaci) {
-        for (Pitanje p : listaPitanja) {
-            if (p.getNaziv().equals(pitanjeET.getText().toString())) {
-                pitanjeET.setBackgroundColor(Color.RED);
-                return false;
-            }
-        }
         return ispravniPodaci;
     }
 
@@ -186,13 +225,11 @@ public class DodajPitanjeAkt extends AppCompatActivity {
         dodajOdgovor();
         dodajTacanButton.setEnabled(false);
     }
-
     private void dodajOdgovor() {
         odgovori.add(odgovorET.getText().toString());
         odgovoriAdapter.notifyDataSetChanged();
         odgovorET.setText("");
     }
-
     private boolean validanOdgovor() {
         if (odgovorET.getText() == null || odgovorET.getText().toString().length() == 0) {
             odgovorET.setText("");
@@ -208,11 +245,20 @@ public class DodajPitanjeAkt extends AppCompatActivity {
     }
 
     private void vratiPitanjeUPrethodnuAktivnost() {
-        Pitanje pitanje = new Pitanje(pitanjeET.getText().toString(), pitanjeET.getText().toString(), odgovori, tacan);
+        if (pitanje != null) {
+            Intent intent = new Intent();
+            intent.putExtra("pitanje", pitanje);
+            intent.putExtra("azuriranaPitanja", azuriranaPitanja);
+            setResult(DodajKvizAkt.ADDED_PITANJE, intent);
+            finish();
+        }
+    }
 
+    @Override
+    public void onBackPressed() {
         Intent intent = new Intent();
-        intent.putExtra("pitanje", pitanje);
-        setResult(1, intent);
+        intent.putExtra("azuriranaPitanja", azuriranaPitanja);
+        setResult(DodajKvizAkt.BACK_FROM_PITANJA, intent);
         finish();
     }
 }

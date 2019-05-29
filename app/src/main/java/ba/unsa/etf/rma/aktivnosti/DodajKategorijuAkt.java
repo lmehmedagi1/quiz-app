@@ -2,6 +2,7 @@ package ba.unsa.etf.rma.aktivnosti;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -15,9 +16,11 @@ import com.maltaisn.icondialog.IconDialog;
 import java.util.ArrayList;
 
 import ba.unsa.etf.rma.R;
+import ba.unsa.etf.rma.klase.GetRequestIntentService;
+import ba.unsa.etf.rma.klase.GetRequestResultReceiver;
 import ba.unsa.etf.rma.klase.Kategorija;
 
-public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.Callback {
+public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.Callback, GetRequestResultReceiver.Receiver {
 
     private EditText nazivKategorije;
     private EditText ikona;
@@ -28,6 +31,8 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
     private IconDialog iconDialog;
 
     private ArrayList<Kategorija> kategorije;
+    private String TOKEN;
+    private GetRequestResultReceiver receiver = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,16 +42,16 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
         // da tastatura ne pomjeri layout
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
-        nazivKategorije = (EditText)findViewById(R.id.etNaziv);
-        ikona = (EditText)findViewById(R.id.etIkona);
-        dodajIkonuButton = (Button)findViewById(R.id.btnDodajIkonu);
+        nazivKategorije       = (EditText)findViewById(R.id.etNaziv);
+        ikona                 = (EditText)findViewById(R.id.etIkona);
+        dodajIkonuButton      = (Button)findViewById(R.id.btnDodajIkonu);
         dodajKategorijuButton = (Button)findViewById(R.id.btnDodajKategoriju);
 
         ikona.setEnabled(false);
 
         Intent intent = getIntent();
         kategorije = (ArrayList<Kategorija>)intent.getSerializableExtra("kategorije");
-
+        TOKEN      = intent.getStringExtra("TOKEN");
 
         iconDialog = new IconDialog();
 
@@ -94,6 +99,19 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
             nazivKategorije.setBackgroundColor(Color.RED);
         }
         else {
+
+            Intent intent = new Intent(Intent.ACTION_SYNC, null, this, GetRequestIntentService.class);
+            intent.putExtra("TOKEN", TOKEN);
+            intent.putExtra("trebaKategorije", true);
+
+            receiver = new GetRequestResultReceiver(new Handler());
+            receiver.setReceiver(this);
+
+            intent.putExtra("receiver", receiver);
+            startService(intent);
+
+            // možda treba sad ovdje alert dialog al to kasnije
+
             for (Kategorija k : kategorije) {
                 if (nazivKategorije.getText().toString().equals(k.getNaziv())) {
                     ispravniPodaci = false;
@@ -106,9 +124,19 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
             ispravniPodaci = false;
             ikona.setBackgroundColor(Color.RED);
         }
-        // treba li provjeriti postoji li ikona vec
 
         return ispravniPodaci;
+    }
+
+    @Override
+    public void onReceiveResult(int resultCode, Bundle resultData) {
+        if (resultCode == GetRequestIntentService.KATEGORIJE_UPDATE) {
+            ArrayList<Kategorija> noveKategorije = (ArrayList<Kategorija>) resultData.getSerializable("kategorije");
+
+            kategorije.clear();
+            kategorije.add(new Kategorija("Svi", "-1"));
+            kategorije.addAll(noveKategorije);
+        }
     }
 
     private void vratiKategorijuUPrethodnuAktivnost() {
@@ -116,6 +144,7 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
 
         Intent intent = new Intent();
         intent.putExtra("kategorija", kategorija);
+        intent.putExtra("kategorije", kategorije);
         setResult(2, intent);
         finish();
     }
