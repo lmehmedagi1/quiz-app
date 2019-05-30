@@ -73,11 +73,11 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         receiver = new GetRequestResultReceiver(new Handler());
         receiver.setReceiver(this);
 
-        azurirajPodatke(null);
-
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         dpwidth = displayMetrics.widthPixels / displayMetrics.density;
+
+        azurirajPodatke(null);
 
         if (dpwidth >= 550) {
             FragmentManager manager = getSupportFragmentManager();
@@ -147,8 +147,7 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
                 kvizovi.addAll(noviKvizovi);
 
                 if (dpwidth >= 550) {
-                    listaFrag.azurirajKategorije(kategorije);
-                    detailFrag.azurirajKvizove(kvizovi);
+                    listaFrag.azurirajKategorije(kategorije, kvizovi);
                     return;
                 }
 
@@ -266,7 +265,7 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
                 kvizovi.addAll((ArrayList<Kviz>) data.getSerializableExtra("kvizovi"));
 
                 if (dpwidth >= 550)
-                    listaFrag.azurirajKategorije(kategorije);
+                    listaFrag.azurirajKategorije(kategorije, kvizovi);
                 else
                     kategorijaAdapter.notifyDataSetChanged();
 
@@ -291,7 +290,7 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
                 kategorije.addAll((ArrayList<Kategorija>) data.getSerializableExtra("kategorije"));
 
                 if (dpwidth >= 550)
-                    listaFrag.azurirajKategorije(kategorije);
+                    listaFrag.azurirajKategorije(kategorije, null);
                 else
                     kategorijaAdapter.notifyDataSetChanged();
             }
@@ -332,8 +331,8 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
 
 
     @Override
-    public void porukaOdListeFrag(Kategorija kategorija) {
-        detailFrag.primiPorukuOdListeFrag(kategorija);
+    public void porukaOdListeFrag(ArrayList<Kviz> noviKvizovi) {
+        detailFrag.primiPorukuOdListeFrag(noviKvizovi);
     }
 
 

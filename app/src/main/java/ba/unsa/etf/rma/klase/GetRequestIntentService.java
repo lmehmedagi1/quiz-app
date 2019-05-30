@@ -119,10 +119,12 @@ public class GetRequestIntentService extends IntentService {
                     receiver.send(PITANJA_UPDATE, bundle);
                 }
                 else if (akcija == AKCIJA_RANGLISTE) {
-                    urlString = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Rangliste?access_token=";
+                    String nazivKviza = intent.getStringExtra("nazivkviza");
+                    urlString = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents:runQuery?fields=document(fields%2Cname)&access_token=";
                     url = new URL(urlString + URLEncoder.encode(token, "UTF-8"));
-                    result = getResponse("", true);
-                    bundle.putSerializable("rangliste", ucitajRangListu(result));
+                    String upit = dajRangListuZaKviz(nazivKviza);
+                    result = getResponse(upit, false);
+                    bundle.putSerializable("ranglista", ucitajRangListu(result));
                     receiver.send(RANGLISTE_UPDATE, bundle);
                 }
             }
@@ -134,7 +136,7 @@ public class GetRequestIntentService extends IntentService {
     }
 
     private ArrayList<RangListaItem> ucitajRangListu(String result) {
-        if (result.equals("{}")) return new ArrayList<>();
+        if (result.equals("{}") || result.equals("[{]\n]")) return new ArrayList<>();
 
         ArrayList<RangListaItem> rangListaArray = new ArrayList<>();
 
@@ -401,5 +403,42 @@ public class GetRequestIntentService extends IntentService {
 
         String result = getResponse(upit, false);
         return ucitajKvizove(result, null, pitanja, odabrana);
+    }
+
+
+    private String dajRangListuZaKviz(String nazivKviza) {
+        String upit = "{\n" +
+                " \"structuredQuery\": {\n" +
+                "  \"select\": {\n" +
+                "   \"fields\": [\n" +
+                "    {\n" +
+                "     \"fieldPath\": \"nazivKviza\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "     \"fieldPath\": \"lista\"\n" +
+                "    }\n" +
+                "   ]\n" +
+                "  },\n" +
+                "  \"from\": [\n" +
+                "   {\n" +
+                "    \"collectionId\": \"Rangliste\"\n" +
+                "   }\n" +
+                "  ],\n" +
+                "  \"where\": {\n" +
+                "   \"fieldFilter\": {\n" +
+                "    \"field\": {\n" +
+                "     \"fieldPath\": \"nazivKviza\"\n" +
+                "    },\n" +
+                "    \"op\": \"EQUAL\",\n" +
+                "    \"value\": {\n" +
+                "     \"stringValue\": \"" + nazivKviza + "\"\n" +
+                "    }\n" +
+                "   }\n" +
+                "  },\n" +
+                "  \"limit\": 1000\n" +
+                " }\n" +
+                "}\n" +
+                "\n";
+        return upit;
     }
 }

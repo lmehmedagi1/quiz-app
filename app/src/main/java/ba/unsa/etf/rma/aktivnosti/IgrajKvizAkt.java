@@ -85,10 +85,6 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
         }
     }
 
-    public void zamijeniFragment() {
-
-    }
-
     @Override
     public void porukaOdPitanja(boolean tacanOdgovor) {
        informacijeFrag.primiPorukuOdPitanjaFragment(tacanOdgovor);
@@ -98,11 +94,18 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
         return kviz;
     }
 
+    /*
     @Override
     public void onBackPressed() {
         if (manager.getBackStackEntryCount() == 1)
             moveTaskToBack(false);
         else
             super.onBackPressed();
+    }
+    */
+
+    @Override
+    public void onBackPressed() {
+        finish();
     }
 }

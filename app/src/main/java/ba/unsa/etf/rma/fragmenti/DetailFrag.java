@@ -52,6 +52,8 @@ public class DetailFrag extends Fragment {
 
         if (view == null) return;
 
+        Log.wtf("On Activity create DETAIL", "On Activity create  DETAIL FRAG");
+
         dodajListenerNaGrid();
     }
 
@@ -80,11 +82,13 @@ public class DetailFrag extends Fragment {
         });
     }
 
-    public void primiPorukuOdListeFrag(Kategorija kategorija) {
-        ((KvizoviAkt)getActivity()).azurirajPodatke(kategorija);
+    public void primiPorukuOdListeFrag(ArrayList<Kviz> noviKvizovi) {
+        azurirajKvizove(noviKvizovi);
     }
 
     public void azurirajKvizove(ArrayList<Kviz> noviKvizovi) {
+
+        Log.wtf("On Activity create LISTAFRAG", "Azuriraj kvizove DETAIL FRAG");
 
         int i = 0;
 

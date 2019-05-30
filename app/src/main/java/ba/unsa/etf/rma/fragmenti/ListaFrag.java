@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,7 +25,7 @@ public class ListaFrag extends Fragment {
 
 
     public interface porukaOdListeFrag {
-        void porukaOdListeFrag (Kategorija kategorija);
+        void porukaOdListeFrag (ArrayList<Kviz> kvizovi);
     }
 
     private porukaOdListeFrag callback;
@@ -47,6 +48,8 @@ public class ListaFrag extends Fragment {
         if (container == null) return null;
         view = inflater.inflate(R.layout.fragment_lista, container, false);
 
+        Log.wtf("On Create view LISTAFRAG", "On Create view LISTAFRAG");
+
         listaKategorija = (ListView) view.findViewById(R.id.listaKategorija);
 
         kategorije = new ArrayList<>();
@@ -58,6 +61,8 @@ public class ListaFrag extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         if (view == null) return;
+
+        Log.wtf("On Activity create LISTAFRAG", "On Activity create  LISTAFRAG");
 
         kategorijaAdapter = new ArrayAdapter<Kategorija>(view.getContext(), android.R.layout.simple_list_item_1, kategorije);
         listaKategorija.setAdapter(kategorijaAdapter);
@@ -72,24 +77,26 @@ public class ListaFrag extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> adapter, View v, int position, long arg3) {
                 Kategorija odabranaKategorija = (Kategorija) adapter.getItemAtPosition(position);
-                callback.porukaOdListeFrag(odabranaKategorija);
+                ((KvizoviAkt)getActivity()).azurirajPodatke(odabranaKategorija);
             }
         });
 
     }
 
-    public void azurirajKategorije(ArrayList<Kategorija> noveKategorije) {
+    public void azurirajKategorije(ArrayList<Kategorija> noveKategorije, ArrayList<Kviz> kvizovi) {
+
+        Log.wtf("On Activity create LISTAFRAG", "Azuriraj kategorije   LISTAFRAG");
         kategorije.clear();
         kategorije.addAll(noveKategorije);
         kategorijaAdapter.notifyDataSetChanged();
-        callback.porukaOdListeFrag(kategorije.get(0));
+        if (kvizovi != null)
+            callback.porukaOdListeFrag(kvizovi);
     }
 
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-
         if (context instanceof porukaOdListeFrag)
             callback = (porukaOdListeFrag) context;
     }
