@@ -170,7 +170,7 @@ public class DodajPitanjeAkt extends AppCompatActivity implements GetRequestResu
     @Override
     public void onReceiveResult(int resultCode, Bundle resultData) {
         if (resultData != null) {
-            if (resultCode == GetRequestIntentService.PITANJA_UPDATE) {
+            if (resultCode == GetRequestIntentService.AKCIJA_PITANJA) {
                 azuriranaPitanja.clear();
                 azuriranaPitanja.addAll((ArrayList<Pitanje>) resultData.getSerializable("pitanja"));
 

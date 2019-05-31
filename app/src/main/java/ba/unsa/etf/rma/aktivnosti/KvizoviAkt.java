@@ -60,8 +60,6 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_kvizovi_akt);
 
-        Log.wtf("create", "POZVAN ON CREATEEEE");
-
         try {
             AccessToken accessToken = new AccessToken();
             accessToken.execute(this);
@@ -84,7 +82,6 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
 
             detailFrag = (DetailFrag) manager.findFragmentByTag(DETALJI_TAG);
             if (detailFrag == null) {
-                Log.wtf("HTTP", "Pravi se detailFrag");
 
                 detailFrag = new DetailFrag();
 
@@ -97,7 +94,6 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
 
             listaFrag = (ListaFrag) manager.findFragmentByTag(LISTA_TAG);
             if (listaFrag == null) {
-                Log.wtf("HTTP", "Pravi se lista frag");
 
                 listaFrag = new ListaFrag();
 
@@ -132,7 +128,7 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
     @Override
     public void onReceiveResult(int resultCode, Bundle resultData) {
         if (resultData != null) {
-            if (resultCode == GetRequestIntentService.KVIZOVI_UPDATE) {
+            if (resultCode == GetRequestIntentService.AKCIJA_KVIZOVI) {
                 ArrayList<Kategorija> noveKategorije = (ArrayList<Kategorija>) resultData.getSerializable("kategorije");
                 ArrayList<Kviz> noviKvizovi          = (ArrayList<Kviz>) resultData.getSerializable("kvizovi");
 
@@ -157,7 +153,7 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
                 listaKvizova.setAdapter(kvizAdapter);
                 kvizAdapter.notifyDataSetChanged();
             }
-            else if (resultCode == GetRequestIntentService.ODABRANA_KATEGORIJA) {
+            else if (resultCode == GetRequestIntentService.AKCIJA_ODABRANA_KATEGORIJA) {
                 ArrayList<Kviz> noviKvizovi = (ArrayList<Kviz>) resultData.getSerializable("kvizovi");
                 kvizovi.clear();
                 kvizovi.addAll(noviKvizovi);

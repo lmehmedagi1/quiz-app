@@ -48,8 +48,6 @@ public class ListaFrag extends Fragment {
         if (container == null) return null;
         view = inflater.inflate(R.layout.fragment_lista, container, false);
 
-        Log.wtf("On Create view LISTAFRAG", "On Create view LISTAFRAG");
-
         listaKategorija = (ListView) view.findViewById(R.id.listaKategorija);
 
         kategorije = new ArrayList<>();
@@ -61,8 +59,6 @@ public class ListaFrag extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         if (view == null) return;
-
-        Log.wtf("On Activity create LISTAFRAG", "On Activity create  LISTAFRAG");
 
         kategorijaAdapter = new ArrayAdapter<Kategorija>(view.getContext(), android.R.layout.simple_list_item_1, kategorije);
         listaKategorija.setAdapter(kategorijaAdapter);
@@ -84,8 +80,6 @@ public class ListaFrag extends Fragment {
     }
 
     public void azurirajKategorije(ArrayList<Kategorija> noveKategorije, ArrayList<Kviz> kvizovi) {
-
-        Log.wtf("On Activity create LISTAFRAG", "Azuriraj kategorije   LISTAFRAG");
         kategorije.clear();
         kategorije.addAll(noveKategorije);
         kategorijaAdapter.notifyDataSetChanged();

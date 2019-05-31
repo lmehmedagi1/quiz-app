@@ -52,8 +52,6 @@ public class HttpPatchRequest extends AsyncTask<String, Void, Void> {
 
                 while ((responseLine = br.readLine()) != null)
                     response.append(responseLine.trim());
-
-                Log.wtf("ODGOVOR", response.toString());
             }
 
         } catch (Exception e) {

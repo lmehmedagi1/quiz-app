@@ -1,5 +1,6 @@
 package ba.unsa.etf.rma.aktivnosti;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Handler;
@@ -127,7 +128,7 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
     @Override
     public void onReceiveResult(int resultCode, Bundle resultData) {
         if (resultData != null) {
-            if (resultCode == GetRequestIntentService.KATEGORIJE_UPDATE) {
+            if (resultCode == GetRequestIntentService.AKCIJA_KATEGORIJE) {
                 azuriraneKategorije = new ArrayList<>();
                 azuriraneKategorije.addAll((ArrayList<Kategorija>) resultData.getSerializable("kategorije"));
 
@@ -135,7 +136,10 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
 
                 for (Kategorija k : azuriraneKategorije) {
                     if (k.getNaziv().equals(kategorija.getNaziv())) {
-                        nazivKategorije.setError("Kategorija vec postoji");
+                        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                        builder.setMessage("Unesena kategorija vec postoji");
+                        builder.setNeutralButton("OK", null);
+                        builder.create().show();
                         return;
                     }
                 }

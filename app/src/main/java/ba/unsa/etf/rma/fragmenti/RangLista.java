@@ -44,8 +44,6 @@ public class RangLista extends Fragment implements GetRequestResultReceiver.Rece
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         v = inflater.inflate(R.layout.fragment_rang_lista, container, false);
 
-        Log.wtf("TAG TAG TAG", "On create view rang liste");
-
         String id = UUID.randomUUID().toString();
         Bundle bundle = this.getArguments();
         noviIgrac = (RangListaItem) bundle.getSerializable("item");
@@ -76,7 +74,6 @@ public class RangLista extends Fragment implements GetRequestResultReceiver.Rece
         super.onActivityCreated(savedInstanceState);
         adapter = new RangListaAdapter(v.getContext(), novaRangLista);
         lista.setAdapter(adapter);
-        Log.wtf("FRAGMENT OVAJ", "on activity created rang listeeeee");
     }
 
     private void patchIgrac(RangListaItem igrac, int pozicija) {
@@ -84,7 +81,7 @@ public class RangLista extends Fragment implements GetRequestResultReceiver.Rece
         String dokument = "{\"fields\": { \"nazivKviza\": {\"stringValue\": \"" + igrac.getNazivKviza() + "\"}," +
                                          "\"lista\": {\"mapValue\": {\"fields\": { \"pozicija\": { \"integerValue\": \"" + pozicija + "\"}, " +
                                                                                   "\"informacije\": {\"mapValue\": {\"fields\": {\"imeIgraca\": {\"stringValue\": \"" + igrac.getImeIgraca() + "\"}," +
-                                                                                                                                "\"procenatTacnih\": {\"doubleValue\": " + igrac.getProcenatTacnih() + "}}}}}}}}}";
+                                                                                                                                "\"procenatTacnih\": {\"doubleValue\": " + igrac.getProcenatTacnih()*100.0 + "}}}}}}}}}";
         HttpPatchRequest patchRequest = new HttpPatchRequest();
         patchRequest.execute(url, token, dokument);
     }
@@ -92,12 +89,10 @@ public class RangLista extends Fragment implements GetRequestResultReceiver.Rece
     @Override
     public void onReceiveResult(int resultCode, Bundle resultData) {
         if (resultData != null) {
-            if (resultCode == GetRequestIntentService.RANGLISTE_UPDATE) {
+            if (resultCode == GetRequestIntentService.AKCIJA_RANGLISTE) {
 
                 novaRangLista.clear();
                 novaRangLista.addAll((ArrayList<RangListaItem>)resultData.getSerializable("ranglista"));
-
-                Log.wtf("vkifhobher", "Uzele se kategorije u rang listi ima ih " + novaRangLista.size());
 
                 Collections.sort(novaRangLista, new Comparator<RangListaItem>() {
                     @Override

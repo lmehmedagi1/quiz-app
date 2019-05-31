@@ -73,8 +73,6 @@ public class HttpGetRequest extends AsyncTask<String, Void, ArrayList<Object>> {
         String[] rangListaCollection = result.split("\\{\n\"name\": ");
 
         for (int i = 1; i < rangListaCollection.length; i++) {
-            Log.wtf("TAGELEMENTID", rangListaCollection[i]);
-
 
             String rangListaDocument = rangListaCollection[i];
 
@@ -113,7 +111,6 @@ public class HttpGetRequest extends AsyncTask<String, Void, ArrayList<Object>> {
         String[] pitanjeCollection = result.split("\\{\n\"name\": ");
 
         for (int i = 1; i < pitanjeCollection.length; i++) {
-            Log.wtf("TAGELEMENTID", pitanjeCollection[i]);
 
             String pitanjeDocument = pitanjeCollection[i];
 
@@ -154,7 +151,6 @@ public class HttpGetRequest extends AsyncTask<String, Void, ArrayList<Object>> {
         String[] kategorijaCollection = result.split("\\{\n\"name\": ");
 
         for (int i = 1; i < kategorijaCollection.length; i++) {
-            Log.wtf("TAGELEMENTID", kategorijaCollection[i]);
 
             String kategorijaDocument = kategorijaCollection[i];
             String[] rows = kategorijaDocument.split("\n");
@@ -183,7 +179,6 @@ public class HttpGetRequest extends AsyncTask<String, Void, ArrayList<Object>> {
         String[] kvizCollection = result.split("\\{\n\"name\": ");
 
         for (int i = 1; i < kvizCollection.length; i++) {
-            Log.wtf("TAGELEMENTID", kvizCollection[i]);
 
             String kvizDocument = kvizCollection[i];
 

@@ -40,9 +40,6 @@ public class DetailFrag extends Fragment {
         gridKvizovi = (GridView) view.findViewById(R.id.gridKvizovi);
         kvizovi = new ArrayList<>();
 
-        Log.wtf("DETAIL", "Pozvan je on create view fragmenta detail" + String.valueOf(kvizovi.size()));
-
-
         return view;
     }
 
@@ -51,8 +48,6 @@ public class DetailFrag extends Fragment {
         super.onActivityCreated(savedInstanceState);
 
         if (view == null) return;
-
-        Log.wtf("On Activity create DETAIL", "On Activity create  DETAIL FRAG");
 
         dodajListenerNaGrid();
     }
@@ -87,12 +82,9 @@ public class DetailFrag extends Fragment {
     }
 
     public void azurirajKvizove(ArrayList<Kviz> noviKvizovi) {
-
-        Log.wtf("On Activity create LISTAFRAG", "Azuriraj kvizove DETAIL FRAG");
-
         int i = 0;
 
-        for (i = 0; i<noviKvizovi.size(); i++) {
+        for (; i<noviKvizovi.size(); i++) {
             if (noviKvizovi.get(i).getNaziv().equals("Dodaj kviz")) {
                 if (i == noviKvizovi.size()-1) break;
                 noviKvizovi.remove(i);
