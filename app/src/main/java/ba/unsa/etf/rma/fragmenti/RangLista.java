@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,8 +18,6 @@ import java.util.UUID;
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.klase.GetRequestIntentService;
 import ba.unsa.etf.rma.klase.GetRequestResultReceiver;
-import ba.unsa.etf.rma.klase.HttpGetRequest;
-import ba.unsa.etf.rma.klase.HttpPatchRequest;
 import ba.unsa.etf.rma.klase.RangListaAdapter;
 import ba.unsa.etf.rma.klase.RangListaItem;
 
@@ -49,14 +46,27 @@ public class RangLista extends Fragment implements GetRequestResultReceiver.Rece
         noviIgrac = (RangListaItem) bundle.getSerializable("item");
         noviIgrac.setIdDokumenta(id);
 
-        token = bundle.getString("token");
-        patchIgrac(noviIgrac, 1);
-
         receiver = new GetRequestResultReceiver(new Handler());
         receiver.setReceiver(RangLista.this);
 
         lista = (ListView) v.findViewById(R.id.listaLV);
-        ucitajRangListu();
+
+        token = bundle.getString("token");
+
+        String url = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Rangliste/" + noviIgrac.getIdDokumenta() + "?access_token=";
+        String dokument = "{\"fields\": { \"nazivKviza\": {\"stringValue\": \"" + noviIgrac.getNazivKviza() + "\"}," +
+                "\"lista\": {\"mapValue\": {\"fields\": { \"pozicija\": { \"integerValue\": \"" + noviIgrac.getPozicija() + "\"}, " +
+                "\"informacije\": {\"mapValue\": {\"fields\": {\"imeIgraca\": {\"stringValue\": \"" + noviIgrac.getImeIgraca() + "\"}," +
+                "\"procenatTacnih\": {\"doubleValue\": " + noviIgrac.getProcenatTacnih() + "}}}}}}}}}";
+
+        Intent intent = new Intent(Intent.ACTION_SYNC, null, getActivity(), GetRequestIntentService.class);
+        intent.putExtra("TOKEN", token);
+        intent.putExtra("akcija", GetRequestIntentService.AKCIJA_PATCH_IGRAC);
+        intent.putExtra("url", url);
+        intent.putExtra("dokument", dokument);
+        intent.putExtra("receiver", receiver);
+        getActivity().startService(intent);
+
         return v;
     }
 
@@ -74,16 +84,6 @@ public class RangLista extends Fragment implements GetRequestResultReceiver.Rece
         super.onActivityCreated(savedInstanceState);
         adapter = new RangListaAdapter(v.getContext(), novaRangLista);
         lista.setAdapter(adapter);
-    }
-
-    private void patchIgrac(RangListaItem igrac, int pozicija) {
-        String url = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Rangliste/" + igrac.getIdDokumenta() + "?access_token=";
-        String dokument = "{\"fields\": { \"nazivKviza\": {\"stringValue\": \"" + igrac.getNazivKviza() + "\"}," +
-                                         "\"lista\": {\"mapValue\": {\"fields\": { \"pozicija\": { \"integerValue\": \"" + pozicija + "\"}, " +
-                                                                                  "\"informacije\": {\"mapValue\": {\"fields\": {\"imeIgraca\": {\"stringValue\": \"" + igrac.getImeIgraca() + "\"}," +
-                                                                                                                                "\"procenatTacnih\": {\"doubleValue\": " + igrac.getProcenatTacnih()*100.0 + "}}}}}}}}}";
-        HttpPatchRequest patchRequest = new HttpPatchRequest();
-        patchRequest.execute(url, token, dokument);
     }
 
     @Override
@@ -104,13 +104,15 @@ public class RangLista extends Fragment implements GetRequestResultReceiver.Rece
                 for (int i = 0; i<novaRangLista.size(); i++) {
                     if (novaRangLista.get(i).getPozicija() != i + 1) {
                         novaRangLista.get(i).setPozicija(i + 1);
-                        // patchIgrac(novaRangLista.get(i), i + 1);
                     }
                 }
 
                 adapter = new RangListaAdapter(v.getContext(), novaRangLista);
                 lista.setAdapter(adapter);
                 adapter.notifyDataSetChanged();
+            }
+            else if (resultCode == GetRequestIntentService.AKCIJA_PATCH_IGRAC) {
+                ucitajRangListu();
             }
         }
     }

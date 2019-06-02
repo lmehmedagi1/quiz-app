@@ -12,7 +12,9 @@ import com.maltaisn.icondialog.IconHelper;
 
 import org.w3c.dom.Text;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Locale;
 
 import ba.unsa.etf.rma.R;
 
@@ -33,9 +35,14 @@ public class RangListaAdapter extends ArrayAdapter<RangListaItem> {
 
         RangListaItem item = getItem(position);
 
+        NumberFormat format = NumberFormat.getPercentInstance(Locale.US);
+        format.setMaximumFractionDigits(2);
+        format.setMinimumFractionDigits(2);
+        String percentage = format.format(item.getProcenatTacnih());
+
         pozicijaTV.setText(String.valueOf(item.getPozicija()));
         imeIgracaTV.setText(item.getImeIgraca());
-        procenatTacnih.setText(String.valueOf(item.getProcenatTacnih()));
+        procenatTacnih.setText(String.valueOf(percentage));
 
         return view;
     }

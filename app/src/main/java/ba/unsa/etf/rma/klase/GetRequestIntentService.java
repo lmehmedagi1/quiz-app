@@ -28,6 +28,7 @@ public class GetRequestIntentService extends IntentService {
     public static final int AKCIJA_IMPORT_KATEGORIJA = 16;
     public static final int AKCIJA_IMPORT_PITANJE = 17;
     public static final int IMPORT_PITANJE_ERROR = 18;
+    public static final int AKCIJA_PATCH_IGRAC = 19;
 
     private HttpURLConnection connection = null;
     private URL url = null;
@@ -73,6 +74,8 @@ public class GetRequestIntentService extends IntentService {
                     akcijaImportKategorije(receiver, intent);
                 else if (akcija == AKCIJA_IMPORT_PITANJE)
                     akcijaImportPitanja(receiver, intent);
+                else if (akcija == AKCIJA_PATCH_IGRAC)
+                    akcijaPatchIgrac(receiver, intent);
             }
             catch(Exception e){
                 e.printStackTrace();
@@ -81,7 +84,39 @@ public class GetRequestIntentService extends IntentService {
         }
     }
 
+    private void akcijaPatchIgrac(ResultReceiver receiver, Intent intent) throws Exception {
+        urlString = intent.getStringExtra("url");
+        url = new URL(urlString + URLEncoder.encode(token, "UTF-8"));
+        String dokument = intent.getStringExtra("dokument");
 
+        connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("PATCH");
+        connection.setDoOutput(true);
+        connection.setRequestProperty("Content-Type", "application/json");
+        connection.setRequestProperty("Accept", "application/json");
+
+
+        try (OutputStream os = connection.getOutputStream()) {
+            byte[] input = dokument.getBytes(StandardCharsets.UTF_8);
+            os.write(input, 0, input.length);
+        }
+
+
+        InputStreamReader streamReader = new InputStreamReader(connection.getInputStream());
+        BufferedReader reader = new BufferedReader(streamReader);
+        StringBuilder stringBuilder = new StringBuilder();
+
+        String inputLine;
+        while((inputLine = reader.readLine()) != null) {
+            stringBuilder.append(inputLine.trim());
+            stringBuilder.append("\n");
+        }
+
+        reader.close();
+        streamReader.close();
+
+        receiver.send(AKCIJA_PATCH_IGRAC, bundle);
+    }
 
     private void akcijaOdabranaKategorija(ResultReceiver receiver, Intent intent) throws Exception {
         Kategorija odabrana = (Kategorija) intent.getSerializableExtra("kategorija");
@@ -443,7 +478,7 @@ public class GetRequestIntentService extends IntentService {
     private String getResponse(String upit, boolean isGET) {
         try {
 
-            connection =(HttpURLConnection) url.openConnection();
+            connection = (HttpURLConnection) url.openConnection();
             if (isGET) {
                 connection.setRequestMethod("GET");
             }
