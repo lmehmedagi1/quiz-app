@@ -262,8 +262,10 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
 
                 if (dpwidth >= 550)
                     listaFrag.azurirajKategorije(kategorije, kvizovi);
-                else
+                else {
                     kategorijaAdapter.notifyDataSetChanged();
+                    spinner.setSelection(0);
+                }
 
                 String izmjena = data.getStringExtra("izmjena");
 

@@ -63,6 +63,10 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
 
     }
 
+    @Override
+    public void imeNijeUneseno() {
+        pitanjeFrag.primiPorukuOZadnjemPitanju();
+    }
 
     @Override
     public void porukaOdInformacija(Pitanje pitanje) {
@@ -71,6 +75,7 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
 
     @Override
     public void porukaOZadnjemPitanju(String ime, double procenat) {
+
         RangListaItem noviIgrac = new RangListaItem(ime, kviz.getNaziv(), procenat, 1);
 
         rangListaFrag = (RangLista) getSupportFragmentManager().findFragmentByTag(RANG_LISTA_TAG);

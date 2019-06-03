@@ -31,6 +31,7 @@ public class InformacijeFrag extends Fragment {
     public interface porukaOdInformacija {
         void porukaOdInformacija (Pitanje pitanje);
         void porukaOZadnjemPitanju(String s, double p);
+        void imeNijeUneseno();
     }
 
     private porukaOdInformacija callback;
@@ -186,6 +187,7 @@ public class InformacijeFrag extends Fragment {
         });
 
         alert.show();
+        callback.imeNijeUneseno();
     }
 
     private void zavrsiKviz(String ime) {

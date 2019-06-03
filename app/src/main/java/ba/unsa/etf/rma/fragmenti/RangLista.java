@@ -97,7 +97,7 @@ public class RangLista extends Fragment implements GetRequestResultReceiver.Rece
                 Collections.sort(novaRangLista, new Comparator<RangListaItem>() {
                     @Override
                     public int compare(RangListaItem o1, RangListaItem o2) {
-                        return (int)(o2.getProcenatTacnih() - o1.getProcenatTacnih());
+                        return (int)(o2.getProcenatTacnih()*100.0 - o1.getProcenatTacnih()*100.0);
                     }
                 });
 
