@@ -1,4 +1,4 @@
-package ba.unsa.etf.rma.klase;
+package ba.unsa.etf.rma.baza;
 
 import android.os.Bundle;
 import android.os.Handler;

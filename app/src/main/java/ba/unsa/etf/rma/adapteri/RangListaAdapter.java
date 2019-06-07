@@ -1,4 +1,4 @@
-package ba.unsa.etf.rma.klase;
+package ba.unsa.etf.rma.adapteri;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Locale;
 
 import ba.unsa.etf.rma.R;
+import ba.unsa.etf.rma.klase.RangListaItem;
 
 public class RangListaAdapter extends ArrayAdapter<RangListaItem> {
 

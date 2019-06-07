@@ -1,31 +1,34 @@
 package ba.unsa.etf.rma.aktivnosti;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Handler;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Spinner;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.UUID;
 
 import ba.unsa.etf.rma.R;
+import ba.unsa.etf.rma.baza.SQLiteDBHelper;
 import ba.unsa.etf.rma.fragmenti.DetailFrag;
 import ba.unsa.etf.rma.fragmenti.ListaFrag;
-import ba.unsa.etf.rma.klase.AccessToken;
-import ba.unsa.etf.rma.klase.GetRequestIntentService;
-import ba.unsa.etf.rma.klase.GetRequestResultReceiver;
-import ba.unsa.etf.rma.klase.HttpPatchRequest;
+import ba.unsa.etf.rma.baza.AccessToken;
+import ba.unsa.etf.rma.baza.GetRequestIntentService;
+import ba.unsa.etf.rma.baza.GetRequestResultReceiver;
+import ba.unsa.etf.rma.baza.HttpPatchRequest;
 import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.klase.Kviz;
-import ba.unsa.etf.rma.klase.KvizAdapter;
+import ba.unsa.etf.rma.adapteri.KvizAdapter;
 import ba.unsa.etf.rma.klase.Pitanje;
 
 public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdListeFrag, GetRequestResultReceiver.Receiver {
@@ -55,10 +58,14 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
     private String TOKEN = "";
     private GetRequestResultReceiver receiver = null;
 
+    private SQLiteDBHelper databaseHelper;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_kvizovi_akt);
+
+        databaseHelper = new SQLiteDBHelper(this);
 
         try {
             AccessToken accessToken = new AccessToken();
@@ -170,17 +177,43 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
     }
 
     public void azurirajPodatke(Kategorija odabrana) {
-        Intent intent = new Intent(Intent.ACTION_SYNC, null, this, GetRequestIntentService.class);
-        intent.putExtra("TOKEN", TOKEN);
 
-        if (odabrana == null || odabrana.getIdDokumenta().equals("SVIID"))
-            intent.putExtra("akcija", GetRequestIntentService.AKCIJA_KVIZOVI);
-        else {
-            intent.putExtra("akcija", GetRequestIntentService.AKCIJA_ODABRANA_KATEGORIJA);
-            intent.putExtra("kategorija", odabrana);
+        if (!isOnline()) {
+            // uzmi kvizove iz sqlite
         }
-        intent.putExtra("receiver", receiver);
-        startService(intent);
+        else {
+            Intent intent = new Intent(Intent.ACTION_SYNC, null, this, GetRequestIntentService.class);
+            intent.putExtra("TOKEN", TOKEN);
+
+            if (odabrana == null || odabrana.getIdDokumenta().equals("SVIID"))
+                intent.putExtra("akcija", GetRequestIntentService.AKCIJA_KVIZOVI);
+            else {
+                intent.putExtra("akcija", GetRequestIntentService.AKCIJA_ODABRANA_KATEGORIJA);
+                intent.putExtra("kategorija", odabrana);
+            }
+            intent.putExtra("receiver", receiver);
+            startService(intent);
+        }
+    }
+
+    public boolean isOnline() {
+        try {
+            HttpURLConnection urlConnection = (HttpURLConnection) (new URL("http://clients3.google.com/generate_204").openConnection());
+            urlConnection.setRequestProperty("User-Agent", "Android");
+            urlConnection.setRequestProperty("Connection", "close");
+            urlConnection.setConnectTimeout(1500);
+            urlConnection.connect();
+            if (urlConnection.getResponseCode() == 204 && urlConnection.getContentLength() == 0)
+                return true;
+        } catch (Exception e) {}
+        return false;
+    }
+
+    private void izbaciAlert(String poruka) {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(poruka);
+        builder.setNeutralButton("OK", null);
+        builder.create().show();
     }
 
     private void dodajListenerNaListu() {
@@ -196,14 +229,22 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         elementZaDodavanje.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                otvoriAktivnostZaDodavanjeKviza(null);
+                if (!isOnline()) {
+                    izbaciAlert("Spojite se na internet da dodate kviz");
+                }
+                else
+                    otvoriAktivnostZaDodavanjeKviza(null);
             }
         });
 
         elementZaDodavanje.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                otvoriAktivnostZaDodavanjeKviza(null);
+                if (!isOnline()) {
+                    izbaciAlert("Spojite se na internet da dodate kviz");
+                }
+                else
+                    otvoriAktivnostZaDodavanjeKviza(null);
                 return true;
             }
         });
@@ -211,8 +252,13 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         listaKvizova.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> adapter, View arg1, int position, long id) {
-                Kviz odabraniKviz = (Kviz)adapter.getItemAtPosition(position);
-                otvoriAktivnostZaDodavanjeKviza(odabraniKviz);
+                if (!isOnline()) {
+                    izbaciAlert("Spojite se na internet da uredite kviz");
+                }
+                else {
+                    Kviz odabraniKviz = (Kviz) adapter.getItemAtPosition(position);
+                    otvoriAktivnostZaDodavanjeKviza(odabraniKviz);
+                }
                 return true;
             }
         });
@@ -227,7 +273,6 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
 
     public void otvoriAktivnostZaDodavanjeKviza(Kviz odabraniKviz) {
         Intent intent = new Intent(KvizoviAkt.this, DodajKvizAkt.class);
-        intent.putExtra("kategorije", kategorije);
         intent.putExtra("kviz", odabraniKviz);
         intent.putExtra("token", TOKEN);
         KvizoviAkt.this.startActivityForResult(intent, ADDED_KVIZ);
@@ -295,7 +340,6 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         }
     }
 
-
     private void dodajKviz(Kviz kviz) {
         if (kviz.getIdDokumenta() == null || kviz.getIdDokumenta().length() == 0) {
             kvizovi.add(kviz);
@@ -326,7 +370,6 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         listaKvizova.setAdapter(kvizAdapter);
         kvizAdapter.notifyDataSetChanged();
     }
-
 
     @Override
     public void porukaOdListeFrag(ArrayList<Kviz> noviKvizovi) {

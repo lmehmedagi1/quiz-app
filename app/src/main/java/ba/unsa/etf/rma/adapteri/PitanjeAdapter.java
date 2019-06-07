@@ -1,4 +1,4 @@
-package ba.unsa.etf.rma.klase;
+package ba.unsa.etf.rma.adapteri;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ba.unsa.etf.rma.R;
+import ba.unsa.etf.rma.klase.Pitanje;
 
 public class PitanjeAdapter extends ArrayAdapter<Pitanje> {
 

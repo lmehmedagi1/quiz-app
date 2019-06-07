@@ -14,7 +14,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <service
-            android:name=".klase.GetRequestIntentService"
+            android:name=".baza.GetRequestIntentService"
             android:exported="false"></service>
 
         <activity

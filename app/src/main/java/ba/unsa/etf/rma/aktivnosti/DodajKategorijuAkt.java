@@ -17,8 +17,8 @@ import com.maltaisn.icondialog.IconDialog;
 import java.util.ArrayList;
 
 import ba.unsa.etf.rma.R;
-import ba.unsa.etf.rma.klase.GetRequestIntentService;
-import ba.unsa.etf.rma.klase.GetRequestResultReceiver;
+import ba.unsa.etf.rma.baza.GetRequestIntentService;
+import ba.unsa.etf.rma.baza.GetRequestResultReceiver;
 import ba.unsa.etf.rma.klase.Kategorija;
 
 public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.Callback, GetRequestResultReceiver.Receiver {

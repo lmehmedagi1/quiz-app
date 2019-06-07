@@ -16,9 +16,9 @@ import java.util.Comparator;
 import java.util.UUID;
 
 import ba.unsa.etf.rma.R;
-import ba.unsa.etf.rma.klase.GetRequestIntentService;
-import ba.unsa.etf.rma.klase.GetRequestResultReceiver;
-import ba.unsa.etf.rma.klase.RangListaAdapter;
+import ba.unsa.etf.rma.baza.GetRequestIntentService;
+import ba.unsa.etf.rma.baza.GetRequestResultReceiver;
+import ba.unsa.etf.rma.adapteri.RangListaAdapter;
 import ba.unsa.etf.rma.klase.RangListaItem;
 
 public class RangLista extends Fragment implements GetRequestResultReceiver.Receiver {

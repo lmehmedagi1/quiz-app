@@ -1,4 +1,4 @@
-package ba.unsa.etf.rma.klase;
+package ba.unsa.etf.rma.baza;
 
 import android.os.AsyncTask;
 import android.util.Log;

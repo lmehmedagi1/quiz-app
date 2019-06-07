@@ -1,4 +1,4 @@
-package ba.unsa.etf.rma.klase;
+package ba.unsa.etf.rma.baza;
 
 import android.app.IntentService;
 import android.content.Intent;
@@ -17,6 +17,11 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
+import ba.unsa.etf.rma.klase.Kategorija;
+import ba.unsa.etf.rma.klase.Kviz;
+import ba.unsa.etf.rma.klase.Pitanje;
+import ba.unsa.etf.rma.klase.RangListaItem;
+
 public class GetRequestIntentService extends IntentService {
 
     public static final int STATUS_ERROR = 0;
@@ -29,6 +34,7 @@ public class GetRequestIntentService extends IntentService {
     public static final int AKCIJA_IMPORT_PITANJE = 17;
     public static final int IMPORT_PITANJE_ERROR = 18;
     public static final int AKCIJA_PATCH_IGRAC = 19;
+    public static final int AKCIJA_KVIZ = 21;
 
     private HttpURLConnection connection = null;
     private URL url = null;
@@ -76,12 +82,88 @@ public class GetRequestIntentService extends IntentService {
                     akcijaImportPitanja(receiver, intent);
                 else if (akcija == AKCIJA_PATCH_IGRAC)
                     akcijaPatchIgrac(receiver, intent);
+                else if (akcija == AKCIJA_KVIZ) {
+                    akcijaKviz(receiver, intent);
+                }
             }
             catch(Exception e){
                 e.printStackTrace();
                 receiver.send(STATUS_ERROR, bundle);
             }
         }
+    }
+
+    private void akcijaKviz(ResultReceiver receiver, Intent intent) throws Exception {
+        ArrayList<Pitanje> pitanja;
+        ArrayList<Kategorija> kategorije;
+
+        urlString = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Kategorije?access_token=";
+        url = new URL(urlString + URLEncoder.encode(token, "UTF-8"));
+        result = getResponse("", true);
+        kategorije = ucitajKategorije(result);
+        bundle.putSerializable("kategorije", kategorije);
+
+        urlString = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Pitanja?access_token=";
+        url = new URL(urlString + URLEncoder.encode(token, "UTF-8"));
+        result = getResponse("", true);
+        pitanja = ucitajPitanja(result);
+        bundle.putSerializable("pitanja", pitanja);
+
+        Kviz kviz = (Kviz) intent.getSerializableExtra("kviz");
+
+        if (kviz != null) {
+
+            urlString = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Kvizovi/" + kviz.getIdDokumenta() + "?access_token=";
+            url = new URL(urlString + URLEncoder.encode(token, "UTF-8"));
+            String document = getResponse("", true);
+
+            String[] rows = document.split("\n");
+
+            String naziv = "";
+            String idKategorije = "";
+            ArrayList<String> idPitanja = new ArrayList<>();
+            ArrayList<Pitanje> pitanjaZaKviz = new ArrayList<>();
+
+            for (int j = 1; j < rows.length; j++) {
+                if (rows[j].contains("\"naziv\": "))
+                    naziv = rows[j + 1].substring(16, rows[j + 1].length() - 1);
+
+                if (rows[j].contains("\"idKategorije\": "))
+                    idKategorije = rows[j + 1].substring(16, rows[j + 1].length() - 1);
+
+                if (rows[j].contains("\"arrayValue\": ")) {
+                    if (rows[j + 1].contains("values")) {
+                        while (!rows[j].equals("]")) {
+                            if (rows[j].contains("\"stringValue\": "))
+                                idPitanja.add(rows[j].substring(16, rows[j].length() - 1));
+                            j++;
+                        }
+                    }
+                }
+            }
+
+            for (Pitanje p : pitanja) {
+                for (String pitanjeID : idPitanja) {
+                    if (p.getIdDokumenta().equals(pitanjeID))
+                        pitanjaZaKviz.add(p);
+                }
+            }
+
+            if (!idKategorije.equals(kviz.getKategorija().getIdDokumenta())) {
+                for (Kategorija k : kategorije) {
+                    if (k.getIdDokumenta().equals(idKategorije))
+                        kviz.setKategorija(k);
+                }
+            }
+
+            kviz.setNaziv(naziv);
+            kviz.setPitanja(pitanjaZaKviz);
+
+            bundle.putSerializable("kviz", kviz);
+        }
+
+        bundle.putSerializable("kviz", kviz);
+        receiver.send(AKCIJA_KVIZ, bundle);
     }
 
     private void akcijaPatchIgrac(ResultReceiver receiver, Intent intent) throws Exception {

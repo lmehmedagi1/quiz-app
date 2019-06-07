@@ -2,7 +2,6 @@ package ba.unsa.etf.rma.aktivnosti;
 
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -18,8 +17,8 @@ import android.widget.ListView;
 import java.util.ArrayList;
 
 import ba.unsa.etf.rma.R;
-import ba.unsa.etf.rma.klase.GetRequestIntentService;
-import ba.unsa.etf.rma.klase.GetRequestResultReceiver;
+import ba.unsa.etf.rma.baza.GetRequestIntentService;
+import ba.unsa.etf.rma.baza.GetRequestResultReceiver;
 import ba.unsa.etf.rma.klase.Pitanje;
 
 public class DodajPitanjeAkt extends AppCompatActivity implements GetRequestResultReceiver.Receiver {
