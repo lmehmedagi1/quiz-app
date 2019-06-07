@@ -1,10 +1,14 @@
 package ba.unsa.etf.rma.aktivnosti;
 
+import android.app.PendingIntent;
 import android.content.Intent;
+import android.provider.AlarmClock;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
+
+import java.util.Calendar;
 
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.fragmenti.InformacijeFrag;
@@ -41,6 +45,15 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
         kviz = (Kviz)intent.getSerializableExtra("kviz");
         token = intent.getStringExtra("token");
 
+        // postavljanje alarma
+        Intent alarmIntent = new Intent(AlarmClock.ACTION_SET_ALARM);
+        alarmIntent.putExtra(AlarmClock.EXTRA_MESSAGE, "Some message!");
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MINUTE, kviz.getPitanja().size()/2);
+        alarmIntent.putExtra(AlarmClock.EXTRA_HOUR, calendar.get(Calendar.HOUR_OF_DAY));
+        alarmIntent.putExtra(AlarmClock.EXTRA_MINUTES, calendar.get(Calendar.MINUTE));
+        alarmIntent.putExtra(AlarmClock.EXTRA_SKIP_UI, true);
+        startActivity(alarmIntent);
 
         manager = getSupportFragmentManager();
 
@@ -75,6 +88,10 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
 
     @Override
     public void porukaOZadnjemPitanju(String ime, double procenat) {
+
+        //mAlarmPendingIntent = PendingIntent.getActivity(this, requestCode, intent, flags);
+
+        //this.getAlarmManager().cancel(mAlarmPendingIntent);
 
         RangListaItem noviIgrac = new RangListaItem(ime, kviz.getNaziv(), procenat, 1);
 

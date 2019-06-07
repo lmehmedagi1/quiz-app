@@ -65,7 +65,7 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_kvizovi_akt);
 
-        databaseHelper = new SQLiteDBHelper(this);
+        //databaseHelper = new SQLiteDBHelper(this);
 
         try {
             AccessToken accessToken = new AccessToken();
@@ -178,10 +178,10 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
 
     public void azurirajPodatke(Kategorija odabrana) {
 
-        if (!isOnline()) {
+        //if (!isOnline()) {
             // uzmi kvizove iz sqlite
-        }
-        else {
+        //}
+        //else {
             Intent intent = new Intent(Intent.ACTION_SYNC, null, this, GetRequestIntentService.class);
             intent.putExtra("TOKEN", TOKEN);
 
@@ -193,7 +193,7 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
             }
             intent.putExtra("receiver", receiver);
             startService(intent);
-        }
+        //}
     }
 
     public boolean isOnline() {
