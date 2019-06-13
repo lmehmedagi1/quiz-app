@@ -1,5 +1,6 @@
 package ba.unsa.etf.rma.aktivnosti;
 
+import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -101,6 +102,13 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
             alarmReceiver = new AlarmReceiver();
             this.registerReceiver(alarmReceiver, new IntentFilter("ba.unsa.etf.rma.aktivnosti.IgrajKvizAkt$AlarmReceiver"));
 
+            Calendar time = Calendar.getInstance();
+            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            Intent alarmIntent = new Intent("ba.unsa.etf.rma.aktivnosti.IgrajKvizAkt$AlarmReceiver");
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 1, alarmIntent, 0);
+
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, time.getTimeInMillis() + kviz.getPitanja().size() * 30300, pendingIntent);
+
             pitanjeFrag = (PitanjeFrag) manager.findFragmentByTag(PITANJE_TAG);
             if (pitanjeFrag == null) {
                 pitanjeFrag = new PitanjeFrag();
@@ -133,9 +141,7 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
 
     @Override
     public void porukaOZadnjemPitanju(String ime, double procenat) {
-
-        //mAlarmPendingIntent = PendingIntent.getActivity(this, requestCode, intent, flags);
-        //this.getAlarmManager().cancel(mAlarmPendingIntent);
+        iskljuciAlarm();
 
         RangListaItem noviIgrac = new RangListaItem(ime, kviz.getNaziv(), procenat, 1);
 
@@ -158,6 +164,21 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
 
     public Kviz dajKviz() {
         return kviz;
+    }
+
+    public void iskljuciAlarm() {
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent("ba.unsa.etf.rma.aktivnosti.IgrajKvizAkt$AlarmReceiver");
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 1, intent, 0);
+        alarmManager.cancel(pendingIntent);
+    }
+
+    public void zavrsiIgranje() {
+        unregisterReceiver(alarmReceiver);
+        if (ringtone != null)
+            ringtone.stop();
+        iskljuciAlarm();
+        finish();
     }
 
 

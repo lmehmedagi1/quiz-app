@@ -119,7 +119,7 @@ public class InformacijeFrag extends Fragment {
     private void dodajListenerNaButton() {
         zavrsiButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                getActivity().finish();
+                ((IgrajKvizAkt) getActivity()).zavrsiIgranje();
             }
         });
     }
