@@ -9,11 +9,9 @@ import android.content.IntentFilter;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
-import android.provider.AlarmClock;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.widget.Toast;
 
 
 import java.util.Calendar;
@@ -44,12 +42,12 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
 
             Uri alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
 
-            if (alert == null) {
+            if (alert == null)
                 alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
 
-                if (alert == null)
-                    alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
-            }
+            if (alert == null)
+                alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+
 
             ringtone = RingtoneManager.getRingtone(context, alert);
             if (ringtone != null)
@@ -105,7 +103,7 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
             Calendar time = Calendar.getInstance();
             AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
             Intent alarmIntent = new Intent("ba.unsa.etf.rma.aktivnosti.IgrajKvizAkt$AlarmReceiver");
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 1, alarmIntent, 0);
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 15, alarmIntent, 0);
 
             alarmManager.setExact(AlarmManager.RTC_WAKEUP, time.getTimeInMillis() + kviz.getPitanja().size() * 30300, pendingIntent);
 
@@ -168,13 +166,14 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
 
     public void iskljuciAlarm() {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent("ba.unsa.etf.rma.aktivnosti.IgrajKvizAkt$AlarmReceiver");
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 1, intent, 0);
+        Intent alarmIntent = new Intent("ba.unsa.etf.rma.aktivnosti.IgrajKvizAkt$AlarmReceiver");
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 15, alarmIntent, 0);
         alarmManager.cancel(pendingIntent);
     }
 
     public void zavrsiIgranje() {
-        unregisterReceiver(alarmReceiver);
+        if (alarmReceiver != null)
+            unregisterReceiver(alarmReceiver);
         if (ringtone != null)
             ringtone.stop();
         iskljuciAlarm();
@@ -184,7 +183,8 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
 
     @Override
     public void onBackPressed() {
-        unregisterReceiver(alarmReceiver);
+        if (alarmReceiver != null)
+            unregisterReceiver(alarmReceiver);
         if (ringtone != null)
             ringtone.stop();
         finish();

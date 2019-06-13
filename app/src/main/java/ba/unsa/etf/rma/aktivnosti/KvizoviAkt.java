@@ -241,10 +241,10 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         elementZaDodavanje.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!isOnline()) {
-                    izbaciAlert("Spojite se na internet da dodate kviz");
-                }
-                else
+                //if (!isOnline()) {
+                 //   izbaciAlert("Spojite se na internet da dodate kviz");
+                //}
+                //else
                     otvoriAktivnostZaDodavanjeKviza(null);
             }
         });
@@ -252,10 +252,10 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         elementZaDodavanje.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                if (!isOnline()) {
-                    izbaciAlert("Spojite se na internet da dodate kviz");
-                }
-                else
+                //if (!isOnline()) {
+                  //  izbaciAlert("Spojite se na internet da dodate kviz");
+                //}
+                //else
                     otvoriAktivnostZaDodavanjeKviza(null);
                 return true;
             }
@@ -264,13 +264,13 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         listaKvizova.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> adapter, View arg1, int position, long id) {
-                if (!isOnline()) {
-                    izbaciAlert("Spojite se na internet da uredite kviz");
-                }
-                else {
+                //if (!isOnline()) {
+                  //  izbaciAlert("Spojite se na internet da uredite kviz");
+                //}
+                //else {
                     Kviz odabraniKviz = (Kviz) adapter.getItemAtPosition(position);
                     otvoriAktivnostZaDodavanjeKviza(odabraniKviz);
-                }
+                //}
                 return true;
             }
         });
