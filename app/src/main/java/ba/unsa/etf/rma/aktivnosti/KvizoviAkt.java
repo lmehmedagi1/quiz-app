@@ -1,8 +1,12 @@
 package ba.unsa.etf.rma.aktivnosti;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Handler;
+import android.provider.CalendarContract;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -15,7 +19,11 @@ import android.widget.Spinner;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 import java.util.UUID;
 
 import ba.unsa.etf.rma.R;
@@ -222,7 +230,11 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
             @Override
             public void onItemClick(AdapterView<?> adapter, View v, int position, long arg3) {
                 Kviz odabraniKviz = (Kviz)adapter.getItemAtPosition(position);
-                otvoriAktivnostZaIgranjeKviza(odabraniKviz);
+                String event = postojiDogadjaj(odabraniKviz.getPitanja().size() * 30000);
+                if (event == null)
+                    otvoriAktivnostZaIgranjeKviza(odabraniKviz);
+                else
+                    izbaciAlert(event);
             }
         });
 
@@ -369,6 +381,62 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         kvizAdapter = new KvizAdapter(getBaseContext(), kvizovi);
         listaKvizova.setAdapter(kvizAdapter);
         kvizAdapter.notifyDataSetChanged();
+    }
+
+
+    private String postojiDogadjaj(long vrijemeIgranjaKviza) {
+
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_CALENDAR}, 420);
+
+        String[] select = {
+                CalendarContract.Events._ID,
+                CalendarContract.Events.TITLE,
+                CalendarContract.Events.DTSTART,
+                CalendarContract.Events.DTEND,
+        };
+
+        String where = "(" + CalendarContract.Events.DTSTART + ">= ? AND "
+                + CalendarContract.Events.DTSTART + "<= ?)"
+                + "OR (" + CalendarContract.Events.DTSTART + " <= ? AND "
+                + CalendarContract.Events.DTEND + ">= ?)";
+
+        String[] args = {"", "", "", ""};
+        args[0] = String.valueOf(Calendar.getInstance().getTimeInMillis());
+        args[1] = String.valueOf(Calendar.getInstance().getTimeInMillis() + vrijemeIgranjaKviza);
+        args[2] = args[0];
+        args[3] = args[0];
+
+        try {
+            Cursor cursor = getContentResolver().query(
+                    CalendarContract.Events.CONTENT_URI,
+                    select,
+                    where,
+                    args,
+                    "DTSTART,DTEND ASC");
+
+            if (cursor == null || cursor.getCount() < 1)
+                return null;
+            else {
+                cursor.moveToFirst();
+                String[] info = new String[3];
+                info[0] = cursor.getString(1);
+
+                SimpleDateFormat sdfDate = new SimpleDateFormat("dd-MMM-yyyy  HH:mm:ss", Locale.getDefault());
+                info[1] = sdfDate.format(new Date(cursor.getLong(2)));
+                info[2] = sdfDate.format(new Date(cursor.getLong(3)));
+
+                String event = "Imate događaj:\n\n" +
+                        "Naziv: " + info[0] + "\n" +
+                        "Počinje: " + info[1] + "\n" +
+                        "Završava: " + info[2] + "\n";
+
+                cursor.close();
+                return event;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override

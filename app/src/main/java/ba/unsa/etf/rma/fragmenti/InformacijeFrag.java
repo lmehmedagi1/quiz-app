@@ -77,6 +77,8 @@ public class InformacijeFrag extends Fragment {
         procenatTacniTV = (TextView) v.findViewById(R.id.infProcenatTacni);
         zavrsiButton = (Button) v.findViewById(R.id.btnKraj);
 
+        dodajListenerNaButton();
+
         nazivKvizaTV.setText(kviz.getNaziv());
         brojTacnihPitanjaTV.setText("0");
         procenatTacniTV.setText("0%");
@@ -85,8 +87,10 @@ public class InformacijeFrag extends Fragment {
             preostalaPitanja.addAll(kviz.getPitanja());
 
 
-        if (preostalaPitanja.size() == 0)
+        if (preostalaPitanja.size() == 0) {
             brojPreostalihPitanjaTV.setText(String.valueOf(0));
+            return v;
+        }
         else
             brojPreostalihPitanjaTV.setText(String.valueOf(preostalaPitanja.size()-1));
 
@@ -97,7 +101,6 @@ public class InformacijeFrag extends Fragment {
         else
             zadnjePitanje();
 
-        dodajListenerNaButton();
         return v;
     }
 
@@ -198,7 +201,6 @@ public class InformacijeFrag extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-
         if (context instanceof porukaOdInformacija)
             callback = (porukaOdInformacija) context;
     }
