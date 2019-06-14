@@ -42,29 +42,29 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
     public static final String KOL_TACAN = "tacan";
 
 
-    private static final String KREIRAJ_TABELU_KVIZOVI = "CREATE TABLE " + TABELA_KVIZOVI + "(" +
+    private static final String KREIRAJ_TABELU_KVIZOVI = "CREATE TABLE IF NOT EXISTS " + TABELA_KVIZOVI + "(" +
             KOL_KVIZ_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
             KOL_NAZIV + " TEXT, " +
-            KOL_DOKUMENT_ID + " TEXT, " +
+            KOL_DOKUMENT_ID + " TEXT UNIQUE, " +
             KOL_KATEGORIJA_ID_DOKUMENTA + " TEXT, " +
             KOL_PITANJA + " TEXT );";
 
-    private static final String KREIRAJ_TABELU_KATEGORIJE = "CREATE TABLE " + TABELA_KATEGORIJE + "(" +
+    private static final String KREIRAJ_TABELU_KATEGORIJE = "CREATE TABLE IF NOT EXISTS " + TABELA_KATEGORIJE + "(" +
             KOL_KATEGORIJA_ID  + " INTEGER PRIMARY KEY AUTOINCREMENT," +
-            KOL_DOKUMENT_ID + " TEXT, " +
+            KOL_DOKUMENT_ID + " TEXT UNIQUE, " +
             KOL_NAZIV + " TEXT, " +
             KOL_ID_IKONICE + " TEXT );";
 
-    private static final String KREIRAJ_TABELU_PITANJA = "CREATE TABLE " + TABELA_PITANJA + "(" +
+    private static final String KREIRAJ_TABELU_PITANJA = "CREATE TABLE IF NOT EXISTS " + TABELA_PITANJA + "(" +
             KOL_PITANJE_ID  + " INTEGER PRIMARY KEY AUTOINCREMENT," +
-            KOL_DOKUMENT_ID + " TEXT, " +
+            KOL_DOKUMENT_ID + " TEXT UNIQUE, " +
             KOL_NAZIV + " TEXT, " +
             KOL_ODGOVORI + " TEXT, " +
             KOL_TACAN + " TEXT );";
 
-    private static final String KREIRAJ_TABELU_RANG_LISTA = "CREATE TABLE " + TABELA_RANG_LISTA + "(" +
+    private static final String KREIRAJ_TABELU_RANG_LISTA = "CREATE TABLE IF NOT EXISTS " + TABELA_RANG_LISTA + "(" +
             KOL_RANG_LISTA_ID  + " INTEGER PRIMARY KEY AUTOINCREMENT," +
-            KOL_DOKUMENT_ID + " TEXT, " +
+            KOL_DOKUMENT_ID + " TEXT UNIQUE, " +
             KOL_NAZIV_KVIZA + " TEXT, " +
             KOL_IME_IGRACA + " TEXT, " +
             KOL_PROCENAT + " FLOAT );";
@@ -109,7 +109,7 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
         values.put(KOL_PITANJA, inputString);
         values.put(KOL_KATEGORIJA_ID_DOKUMENTA, kviz.getKategorija().getIdDokumenta());
 
-        long id = db.insertWithOnConflict(TABELA_KVIZOVI, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+        long id = db.replace(TABELA_KVIZOVI, null, values);
     }
 
     public void dodajKategorija(Kategorija kategorija) {
@@ -120,7 +120,7 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
         values.put(KOL_DOKUMENT_ID, kategorija.getIdDokumenta());
         values.put(KOL_ID_IKONICE, kategorija.getId());
 
-        long id = db.insertWithOnConflict(TABELA_KATEGORIJE, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+        long id = db.replace(TABELA_KATEGORIJE, null, values);
     }
 
     public void dodajPitanje(Pitanje pitanje) {
@@ -134,7 +134,7 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
         String inputString = gson.toJson(pitanje.getOdgovori());
         values.put(KOL_ODGOVORI, inputString);
 
-        long id = db.insertWithOnConflict(TABELA_PITANJA, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+        long id = db.replace(TABELA_PITANJA, null, values);
     }
 
     public void dodajRangListItem(RangListaItem rangListaItem) {
@@ -146,7 +146,7 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
         values.put(KOL_IME_IGRACA, rangListaItem.getImeIgraca());
         values.put(KOL_PROCENAT, rangListaItem.getProcenatTacnih());
 
-        long id = db.insertWithOnConflict(TABELA_RANG_LISTA, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+        long id = db.replace(TABELA_RANG_LISTA, null, values);
     }
 
     public ArrayList<Kviz> dajSveKvizove() {
@@ -165,18 +165,42 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
                 kvizovi.add(dajKviz(idDokumenta));
             }
         }
-        cursor.close();
+        if (cursor != null)
+            cursor.close();
         db.close();
 
         return kvizovi;
+    }
+
+    public ArrayList<Kategorija> dajSveKategorije() {
+        ArrayList<Kategorija> kategorije = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("select * from " + TABELA_KATEGORIJE, null);
+
+        if (cursor.moveToFirst()) {
+
+            String idDokumenta = cursor.getString(cursor.getColumnIndex(KOL_DOKUMENT_ID));
+            kategorije.add(dajKategoriju(idDokumenta));
+
+            while(cursor.moveToNext()){
+
+                idDokumenta = cursor.getString(cursor.getColumnIndex(KOL_DOKUMENT_ID));
+                kategorije.add(dajKategoriju(idDokumenta));
+            }
+        }
+        if (cursor != null)
+            cursor.close();
+        db.close();
+
+        return kategorije;
     }
 
     public Kviz dajKviz(String idDokumenta) {
         Kviz kviz = null;
         Cursor cursor = null;
         SQLiteDatabase db = this.getReadableDatabase();
-        String[] kolone = new String[]{KOL_NAZIV, KOL_PITANJA, KOL_KATEGORIJA_ID};
-        String where = KOL_DOKUMENT_ID + "=" + idDokumenta;
+        String[] kolone = new String[]{KOL_NAZIV, KOL_PITANJA, KOL_KATEGORIJA_ID_DOKUMENTA};
+        String where = KOL_DOKUMENT_ID + "='" + idDokumenta + "'";
         try {
             cursor = db.query(TABELA_KVIZOVI, kolone, where, null, null, null, null);
             if(cursor.getCount() > 0) {
@@ -204,7 +228,9 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
             }
         }
         finally {
-            cursor.close();
+            if (cursor != null)
+                cursor.close();
+            db.close();
         }
 
         return kviz;
@@ -215,7 +241,7 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
         Cursor cursor = null;
         SQLiteDatabase db = this.getReadableDatabase();
         String[] kolone = new String[]{KOL_NAZIV, KOL_ID_IKONICE};
-        String where = KOL_DOKUMENT_ID + "=" + idDokumenta;
+        String where = KOL_DOKUMENT_ID + "='" + idDokumenta + "'";
         try {
             cursor = db.query(TABELA_KATEGORIJE, kolone, where, null, null, null, null);
             if(cursor.getCount() > 0) {
@@ -229,7 +255,8 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
             }
         }
         finally {
-            cursor.close();
+            if (cursor != null)
+                cursor.close();
         }
 
         return kategorija;
@@ -240,7 +267,7 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
         Cursor cursor = null;
         SQLiteDatabase db = this.getReadableDatabase();
         String[] kolone = new String[]{KOL_NAZIV, KOL_ODGOVORI, KOL_TACAN};
-        String where = KOL_DOKUMENT_ID + "=" + idDokumenta;
+        String where = KOL_DOKUMENT_ID + "='" + idDokumenta + "'";
         try {
             cursor = db.query(TABELA_PITANJA, kolone, where, null, null, null, null);
             if(cursor.getCount() > 0) {
@@ -259,7 +286,8 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
             }
         }
         finally {
-            cursor.close();
+            if (cursor != null)
+                cursor.close();
         }
 
         return pitanje;
@@ -270,7 +298,7 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
         Cursor cursor = null;
         SQLiteDatabase db = this.getReadableDatabase();
         String[] kolone = new String[]{KOL_NAZIV_KVIZA, KOL_IME_IGRACA, KOL_PROCENAT};
-        String where = KOL_DOKUMENT_ID + "=" + idDokumenta;
+        String where = KOL_DOKUMENT_ID + "='" + idDokumenta + "'";
         try {
             cursor = db.query(TABELA_RANG_LISTA, kolone, where, null, null, null, null);
             if(cursor.getCount() > 0) {
@@ -285,7 +313,8 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
             }
         }
         finally {
-            cursor.close();
+            if (cursor != null)
+                cursor.close();
         }
 
         return rangListaItem;

@@ -67,7 +67,7 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
     private String TOKEN = "";
     private GetRequestResultReceiver receiver = null;
 
-    private SQLiteDBHelper databaseHelper;
+    private static SQLiteDBHelper databaseHelper;
     private boolean isOnline = false;
     private ConnectionStateMonitor connectionStateMonitor;
 
@@ -89,16 +89,12 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
             e.printStackTrace();
         }
 
-        Log.wtf("ovo zavrsilo", TOKEN );
-
         receiver = new GetRequestResultReceiver(new Handler());
         receiver.setReceiver(this);
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         dpwidth = displayMetrics.widthPixels / displayMetrics.density;
-
-        azurirajPodatke(null);
 
         if (dpwidth >= 550) {
             FragmentManager manager = getSupportFragmentManager();
@@ -146,7 +142,8 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
             dodajListenerNaSpinner();
             dodajListenerNaListu();
         }
-        Log.wtf("hm", "onCreate: ovo bi treblo prije");
+
+        azurirajPodatke(null);
     }
 
     @Override
@@ -195,10 +192,10 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
 
     public void azurirajPodatke(Kategorija odabrana) {
 
-        if (!isOnline) {
-            // uzmi kvizove iz sqlite
-            ArrayList<Kategorija> noveKategorije = new ArrayList<>();
-            ArrayList<Kviz> noviKvizovi          = new ArrayList<>();
+        if (!isOnline && odabrana == null) {
+            // pokretanje aplikacije bez interneta, uzmi sve kvizove iz bsze
+            ArrayList<Kategorija> noveKategorije = databaseHelper.dajSveKategorije();
+            ArrayList<Kviz> noviKvizovi          = databaseHelper.dajSveKvizove();
 
             Kategorija kategorijaSvi = new Kategorija("Svi", "-1");
             kategorijaSvi.setIdDokumenta("SVIID");
@@ -221,7 +218,23 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
             listaKvizova.setAdapter(kvizAdapter);
             kvizAdapter.notifyDataSetChanged();
         }
+        else if (!isOnline) {
+            // filtriranje kvizova bez interneta
+            ArrayList<Kviz> azuriraniKvizovi = new ArrayList<>();
+            if (odabrana.getNaziv().equals("Svi"))
+                azuriraniKvizovi.addAll(kvizovi);
+            else {
+                for (Kviz k : kvizovi) {
+                    if (k.getKategorija().getNaziv().equals(odabrana.getNaziv()))
+                        azuriraniKvizovi.add(k);
+                }
+            }
+            kvizAdapter = new KvizAdapter(getBaseContext(), azuriraniKvizovi);
+            listaKvizova.setAdapter(kvizAdapter);
+            kvizAdapter.notifyDataSetChanged();
+        }
         else {
+            // filtriranje kvizova sa pristupom internetu
             Intent intent = new Intent(Intent.ACTION_SYNC, null, this, GetRequestIntentService.class);
             intent.putExtra("TOKEN", TOKEN);
 
@@ -392,6 +405,8 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         HttpPatchRequest patchRequest = new HttpPatchRequest();
         patchRequest.execute(url, TOKEN, dokument.toString());
 
+        databaseHelper.dodajKviz(kviz);
+
         if (dpwidth >= 550) {
             detailFrag.azurirajKvizove(kvizovi);
             return;
@@ -401,7 +416,6 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         listaKvizova.setAdapter(kvizAdapter);
         kvizAdapter.notifyDataSetChanged();
     }
-
 
     private String postojiDogadjaj(long vrijemeIgranjaKviza) {
 
@@ -463,8 +477,6 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         detailFrag.primiPorukuOdListeFrag(noviKvizovi);
     }
 
-
-
     @Override
     public void onNetworkLost() {
         Log.wtf("Lejla", "network availableeeee");
@@ -473,10 +485,18 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
 
     @Override
     public void onNetworkAvailable() {
-        Log.wtf("Lejla", "network availableeeee");
+        // ukoliko je aplikacija pokrenuta bez interneta
+        if (TOKEN == null || TOKEN.length() == 0) {
+            try {
+                AccessToken accessToken = new AccessToken();
+                accessToken.execute(this);
+                TOKEN = accessToken.get();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         isOnline = true;
     }
-
 
     // invoked when the activity may be temporarily destroyed, save the instance state here
     @Override
@@ -486,10 +506,13 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         super.onSaveInstanceState(outState);
     }
 
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
         connectionStateMonitor.unregisterNetworkCallback();
+    }
+
+    public static SQLiteDBHelper getDatabaseHelper() {
+        return databaseHelper;
     }
 }

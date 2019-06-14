@@ -2,6 +2,7 @@ package ba.unsa.etf.rma.aktivnosti;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -13,15 +14,17 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.baza.GetRequestIntentService;
 import ba.unsa.etf.rma.baza.GetRequestResultReceiver;
+import ba.unsa.etf.rma.klase.ConnectionStateMonitor;
 import ba.unsa.etf.rma.klase.Pitanje;
 
-public class DodajPitanjeAkt extends AppCompatActivity implements GetRequestResultReceiver.Receiver {
+public class DodajPitanjeAkt extends AppCompatActivity implements GetRequestResultReceiver.Receiver, ConnectionStateMonitor.Network {
 
     private EditText pitanjeET;
     private EditText odgovorET;
@@ -45,11 +48,16 @@ public class DodajPitanjeAkt extends AppCompatActivity implements GetRequestResu
 
     private String trenutniNaziv = "";
 
+    ConnectionStateMonitor connectionStateMonitor;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dodaj_pitanje_akt);
+
+        connectionStateMonitor = new ConnectionStateMonitor(this, (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE));
+        connectionStateMonitor.registerNetworkCallback();
 
         receiver = new GetRequestResultReceiver(new Handler());
         receiver.setReceiver(this);
@@ -247,6 +255,7 @@ public class DodajPitanjeAkt extends AppCompatActivity implements GetRequestResu
             intent.putExtra("pitanje", pitanje);
             intent.putExtra("azuriranaPitanja", azuriranaPitanja);
             setResult(DodajKvizAkt.ADDED_PITANJE, intent);
+            connectionStateMonitor.unregisterNetworkCallback();
             finish();
         }
     }
@@ -256,6 +265,19 @@ public class DodajPitanjeAkt extends AppCompatActivity implements GetRequestResu
         Intent intent = new Intent();
         intent.putExtra("azuriranaPitanja", azuriranaPitanja);
         setResult(DodajKvizAkt.BACK_FROM_PITANJA, intent);
+        connectionStateMonitor.unregisterNetworkCallback();
+        finish();
+    }
+
+    @Override
+    public void onNetworkAvailable() {
+
+    }
+
+    @Override
+    public void onNetworkLost() {
+        Toast.makeText(this, "Ne mozete dodavati pitanje bez pristupa internetu", Toast.LENGTH_SHORT).show();
+        connectionStateMonitor.unregisterNetworkCallback();
         finish();
     }
 }

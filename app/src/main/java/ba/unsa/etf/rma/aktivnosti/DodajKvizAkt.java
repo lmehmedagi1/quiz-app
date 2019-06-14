@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
@@ -16,6 +17,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -29,12 +31,13 @@ import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.baza.GetRequestIntentService;
 import ba.unsa.etf.rma.baza.GetRequestResultReceiver;
 import ba.unsa.etf.rma.baza.HttpPatchRequest;
+import ba.unsa.etf.rma.klase.ConnectionStateMonitor;
 import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.klase.Pitanje;
 import ba.unsa.etf.rma.adapteri.PitanjeAdapter;
 
-public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultReceiver.Receiver {
+public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultReceiver.Receiver, ConnectionStateMonitor.Network {
 
     public static final int BACK_FROM_PITANJA = 45;
     public static final int BACK_FROM_KATEGORIJE = 55;
@@ -74,11 +77,15 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
     private Kategorija trenutnaKategorija = null;
     private ArrayList<Pitanje> trenutnoDodanaPitanja = null;
 
+    private ConnectionStateMonitor connectionStateMonitor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dodaj_kviz_akt);
+
+        connectionStateMonitor = new ConnectionStateMonitor(this, (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE));
+        connectionStateMonitor.registerNetworkCallback();
 
         // da tastatura ne pomjeri layout
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
@@ -623,6 +630,8 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
         kategorije.add(new Kategorija("Dodaj kategoriju", "Dodaj kategoriju"));
         kategorijaAdapter.notifyDataSetChanged();
 
+        KvizoviAkt.getDatabaseHelper().dodajKategorija(kategorija);
+
         spinner.setSelection(kategorije.size()-2);
     }
 
@@ -651,6 +660,8 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
         HttpPatchRequest patchRequest = new HttpPatchRequest();
         patchRequest.execute(url, TOKEN, dokument);
 
+        KvizoviAkt.getDatabaseHelper().dodajPitanje(pitanje);
+
         dodanaPitanja.add(pitanje);
 
         dodanaPitanjaAdapter = new PitanjeAdapter(this, dodanaPitanja);
@@ -677,6 +688,7 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
         intent.putExtra("kategorije", kategorije);
 
         setResult(KvizoviAkt.ADDED_KVIZ, intent);
+        connectionStateMonitor.unregisterNetworkCallback();
         finish();
     }
 
@@ -686,8 +698,16 @@ public class DodajKvizAkt extends AppCompatActivity implements GetRequestResultR
         kategorije.remove(kategorije.size()-1);
         intent.putExtra("kategorije", kategorije);
         setResult(KvizoviAkt.BACK_FROM_DODAJ_KVIZ, intent);
-
+        connectionStateMonitor.unregisterNetworkCallback();
         finish();
     }
 
+    @Override
+    public void onNetworkAvailable() {}
+
+    @Override
+    public void onNetworkLost() {
+        Toast.makeText(this, "Ne mozete dodavati kviz bez pristupa internetu", Toast.LENGTH_SHORT).show();
+        finish();
+    }
 }

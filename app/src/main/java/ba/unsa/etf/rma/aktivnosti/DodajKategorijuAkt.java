@@ -3,6 +3,7 @@ package ba.unsa.etf.rma.aktivnosti;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -10,6 +11,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.maltaisn.icondialog.Icon;
 import com.maltaisn.icondialog.IconDialog;
@@ -19,9 +21,10 @@ import java.util.ArrayList;
 import ba.unsa.etf.rma.R;
 import ba.unsa.etf.rma.baza.GetRequestIntentService;
 import ba.unsa.etf.rma.baza.GetRequestResultReceiver;
+import ba.unsa.etf.rma.klase.ConnectionStateMonitor;
 import ba.unsa.etf.rma.klase.Kategorija;
 
-public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.Callback, GetRequestResultReceiver.Receiver {
+public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.Callback, GetRequestResultReceiver.Receiver, ConnectionStateMonitor.Network {
 
     private EditText nazivKategorije;
     private EditText ikona;
@@ -39,10 +42,15 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
     private String trenutnaIkona = "";
     private Kategorija kategorija = null;
 
+    private ConnectionStateMonitor connectionStateMonitor;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dodaj_kategoriju_akt);
+
+        connectionStateMonitor = new ConnectionStateMonitor(this, (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE));
+        connectionStateMonitor.registerNetworkCallback();
 
         // da tastatura ne pomjeri layout
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
@@ -154,6 +162,7 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
         intent.putExtra("kategorija", kategorija);
         intent.putExtra("kategorije", azuriraneKategorije);
         setResult(DodajKvizAkt.ADDED_KATEGORIJA, intent);
+        connectionStateMonitor.unregisterNetworkCallback();
         finish();
     }
 
@@ -162,6 +171,7 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
         Intent intent = new Intent();
         intent.putExtra("kategorije", azuriraneKategorije);
         setResult(DodajKvizAkt.BACK_FROM_KATEGORIJE, intent);
+        connectionStateMonitor.unregisterNetworkCallback();
         finish();
     }
 
@@ -174,4 +184,15 @@ public class DodajKategorijuAkt extends AppCompatActivity implements IconDialog.
         }
     }
 
+    @Override
+    public void onNetworkAvailable() {
+
+    }
+
+    @Override
+    public void onNetworkLost() {
+        Toast.makeText(this, "Ne mozete dodavati kategoriju bez pristupa internetu", Toast.LENGTH_SHORT).show();
+        connectionStateMonitor.unregisterNetworkCallback();
+        finish();
+    }
 }
