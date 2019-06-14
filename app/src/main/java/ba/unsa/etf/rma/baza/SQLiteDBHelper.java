@@ -12,6 +12,7 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 
+import ba.unsa.etf.rma.fragmenti.RangLista;
 import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.klase.Pitanje;
@@ -193,6 +194,44 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
         db.close();
 
         return kategorije;
+    }
+
+    public ArrayList<RangListaItem> dajRangListuZaKviz(String nazivKviza) {
+        ArrayList<RangListaItem> rangLista = new ArrayList<>();
+
+        String[] kolone = new String[]{KOL_DOKUMENT_ID, KOL_NAZIV_KVIZA, KOL_IME_IGRACA, KOL_PROCENAT};
+        String where = KOL_NAZIV_KVIZA + "='" + nazivKviza + "'";
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(TABELA_RANG_LISTA, kolone, where, null, null, null, null);
+
+        if (cursor.moveToFirst()) {
+
+            String idDokumenta = cursor.getString(cursor.getColumnIndex(KOL_DOKUMENT_ID));
+            String imeIgraca = cursor.getString(cursor.getColumnIndex(KOL_IME_IGRACA));
+            float procenat = cursor.getFloat(cursor.getColumnIndex(KOL_PROCENAT));
+
+            RangListaItem rangListaItem = new RangListaItem(imeIgraca, nazivKviza, procenat, 1);
+            rangListaItem.setIdDokumenta(idDokumenta);
+
+            rangLista.add(rangListaItem);
+
+            while(cursor.moveToNext()){
+
+                idDokumenta = cursor.getString(cursor.getColumnIndex(KOL_DOKUMENT_ID));
+                imeIgraca = cursor.getString(cursor.getColumnIndex(KOL_IME_IGRACA));
+                procenat = cursor.getFloat(cursor.getColumnIndex(KOL_PROCENAT));
+
+                rangListaItem = new RangListaItem(imeIgraca, nazivKviza, procenat, 1);
+                rangListaItem.setIdDokumenta(idDokumenta);
+
+                rangLista.add(rangListaItem);
+            }
+        }
+        if (cursor != null)
+            cursor.close();
+        db.close();
+
+        return rangLista;
     }
 
     public Kviz dajKviz(String idDokumenta) {

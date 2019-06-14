@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
@@ -21,11 +22,12 @@ import ba.unsa.etf.rma.fragmenti.InformacijeFrag;
 import ba.unsa.etf.rma.fragmenti.IstekloVrijemeFrag;
 import ba.unsa.etf.rma.fragmenti.PitanjeFrag;
 import ba.unsa.etf.rma.fragmenti.RangLista;
+import ba.unsa.etf.rma.klase.ConnectionStateMonitor;
 import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.klase.Pitanje;
 import ba.unsa.etf.rma.klase.RangListaItem;
 
-public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.porukaOdInformacija, PitanjeFrag.porukaOdPitanja {
+public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.porukaOdInformacija, PitanjeFrag.porukaOdPitanja, ConnectionStateMonitor.Network {
 
     private class AlarmReceiver extends BroadcastReceiver {
         @Override
@@ -72,11 +74,16 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
     private Ringtone ringtone;
     private AlarmReceiver alarmReceiver;
 
+    private ConnectionStateMonitor connectionStateMonitor;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         if (savedInstanceState != null) return;
+
+        connectionStateMonitor = new ConnectionStateMonitor(this, (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE));
+        connectionStateMonitor.registerNetworkCallback();
 
         setContentView(R.layout.activity_igraj_kviz_akt);
 
@@ -188,5 +195,15 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
         if (ringtone != null)
             ringtone.stop();
         finish();
+    }
+
+    @Override
+    public void onNetworkAvailable() {
+        KvizoviAkt.isOnline = true;
+    }
+
+    @Override
+    public void onNetworkLost() {
+        KvizoviAkt.isOnline = false;
     }
 }

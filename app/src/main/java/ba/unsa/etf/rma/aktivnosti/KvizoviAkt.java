@@ -34,11 +34,13 @@ import ba.unsa.etf.rma.baza.AccessToken;
 import ba.unsa.etf.rma.baza.GetRequestIntentService;
 import ba.unsa.etf.rma.baza.GetRequestResultReceiver;
 import ba.unsa.etf.rma.baza.HttpPatchRequest;
+import ba.unsa.etf.rma.fragmenti.RangLista;
 import ba.unsa.etf.rma.klase.ConnectionStateMonitor;
 import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.adapteri.KvizAdapter;
 import ba.unsa.etf.rma.klase.Pitanje;
+import ba.unsa.etf.rma.klase.RangListaItem;
 
 public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdListeFrag, GetRequestResultReceiver.Receiver, ConnectionStateMonitor.Network {
 
@@ -68,7 +70,7 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
     private GetRequestResultReceiver receiver = null;
 
     private static SQLiteDBHelper databaseHelper;
-    private boolean isOnline = false;
+    public static boolean isOnline = false;
     private ConnectionStateMonitor connectionStateMonitor;
 
     @Override
@@ -186,6 +188,24 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
 
                 kvizAdapter = new KvizAdapter(getBaseContext(), kvizovi);
                 listaKvizova.setAdapter(kvizAdapter);
+            }
+            else if (resultCode == GetRequestIntentService.AKCIJA_SQLITE_GET) {
+                ArrayList<Kviz> noviKvizovi = (ArrayList<Kviz>) resultData.getSerializable("kvizovi");
+                ArrayList<Kategorija> noveKategorije = (ArrayList<Kategorija>) resultData.getSerializable("kategorije");
+                ArrayList<Pitanje> novaPitanja = (ArrayList<Pitanje>) resultData.getSerializable("pitanja");
+                ArrayList<RangListaItem> noveRangListe = (ArrayList<RangListaItem>) resultData.getSerializable("rangliste");
+
+                for (Kviz k : noviKvizovi)
+                    databaseHelper.dodajKviz(k);
+
+                for (Kategorija k : noveKategorije)
+                    databaseHelper.dodajKategorija(k);
+
+                for (Pitanje p : novaPitanja)
+                    databaseHelper.dodajPitanje(p);
+
+                for (RangListaItem r : noveRangListe)
+                    databaseHelper.dodajRangListItem(r);
             }
         }
     }
@@ -495,6 +515,15 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
                 e.printStackTrace();
             }
         }
+
+
+        Intent intent = new Intent(Intent.ACTION_SYNC, null, this, GetRequestIntentService.class);
+        intent.putExtra("TOKEN", TOKEN);
+        intent.putExtra("akcija", GetRequestIntentService.AKCIJA_SQLITE_GET);
+        intent.putExtra("receiver", receiver);
+        startService(intent);
+
+
         isOnline = true;
     }
 

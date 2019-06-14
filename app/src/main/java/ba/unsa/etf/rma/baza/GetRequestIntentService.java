@@ -35,6 +35,8 @@ public class GetRequestIntentService extends IntentService {
     public static final int IMPORT_PITANJE_ERROR = 18;
     public static final int AKCIJA_PATCH_IGRAC = 19;
     public static final int AKCIJA_KVIZ = 21;
+    public static final int AKCIJA_SQLITE_GET = 22;
+    public static final int AKCIJA_SQLITE_POST = 23;
 
     private HttpURLConnection connection = null;
     private URL url = null;
@@ -82,15 +84,62 @@ public class GetRequestIntentService extends IntentService {
                     akcijaImportPitanja(receiver, intent);
                 else if (akcija == AKCIJA_PATCH_IGRAC)
                     akcijaPatchIgrac(receiver, intent);
-                else if (akcija == AKCIJA_KVIZ) {
+                else if (akcija == AKCIJA_KVIZ)
                     akcijaKviz(receiver, intent);
-                }
+                else if (akcija == AKCIJA_SQLITE_GET)
+                    akcijaSQLiteGet(receiver, intent);
+                else if (akcija == AKCIJA_SQLITE_POST)
+                    akcijaSQLitePost(receiver, intent);
             }
             catch(Exception e){
                 e.printStackTrace();
                 receiver.send(STATUS_ERROR, bundle);
             }
         }
+    }
+
+    private void akcijaSQLitePost(ResultReceiver receiver, Intent intent) throws Exception {
+        RangListaItem rangListaItem = (RangListaItem) intent.getSerializableExtra("ranglistaitem");
+
+        urlString = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Rangliste/" + rangListaItem.getIdDokumenta() + "?access_token=";
+        url = new URL(urlString + URLEncoder.encode(token, "UTF-8"));
+        String upit = "{\"fields\": { \"nazivKviza\": {\"stringValue\": \"" + rangListaItem.getNazivKviza() + "\"}," +
+                "\"lista\": {\"mapValue\": {\"fields\": { \"pozicija\": { \"integerValue\": \"" + rangListaItem.getPozicija() + "\"}, " +
+                "\"informacije\": {\"mapValue\": {\"fields\": {\"imeIgraca\": {\"stringValue\": \"" + rangListaItem.getImeIgraca() + "\"}," +
+                "\"procenatTacnih\": {\"doubleValue\": " + rangListaItem.getProcenatTacnih() + "}}}}}}}}}";
+
+        result = getResponse(upit, false);
+        bundle.putSerializable("ranglista", ucitajRangListu(result));
+        receiver.send(AKCIJA_SQLITE_POST, bundle);
+    }
+
+    private void akcijaSQLiteGet(ResultReceiver receiver, Intent intent) throws Exception {
+        ArrayList<Pitanje> pitanja;
+        ArrayList<Kategorija> kategorije;
+
+        urlString = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Kategorije?access_token=";
+        url = new URL(urlString + URLEncoder.encode(token, "UTF-8"));
+        result = getResponse("", true);
+        kategorije = ucitajKategorije(result);
+        bundle.putSerializable("kategorije", kategorije);
+
+        urlString = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Pitanja?access_token=";
+        url = new URL(urlString + URLEncoder.encode(token, "UTF-8"));
+        result = getResponse("", true);
+        pitanja = ucitajPitanja(result);
+        bundle.putSerializable("pitanja", pitanja);
+
+        urlString = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Kvizovi?access_token=";
+        url = new URL(urlString + URLEncoder.encode(token, "UTF-8"));
+        result = getResponse("", true);
+        bundle.putSerializable("kvizovi", ucitajKvizove(result, kategorije, pitanja, null));
+
+        urlString = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Rangliste?access_token=";
+        url = new URL(urlString + URLEncoder.encode(token, "UTF-8"));
+        result = getResponse("", true);
+        bundle.putSerializable("rangliste", ucitajRangListu(result));
+
+        receiver.send(AKCIJA_SQLITE_GET, bundle);
     }
 
     private void akcijaKviz(ResultReceiver receiver, Intent intent) throws Exception {

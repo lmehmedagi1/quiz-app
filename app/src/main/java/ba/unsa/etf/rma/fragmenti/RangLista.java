@@ -16,6 +16,7 @@ import java.util.Comparator;
 import java.util.UUID;
 
 import ba.unsa.etf.rma.R;
+import ba.unsa.etf.rma.aktivnosti.KvizoviAkt;
 import ba.unsa.etf.rma.baza.GetRequestIntentService;
 import ba.unsa.etf.rma.baza.GetRequestResultReceiver;
 import ba.unsa.etf.rma.adapteri.RangListaAdapter;
@@ -53,24 +54,53 @@ public class RangLista extends Fragment implements GetRequestResultReceiver.Rece
 
         token = bundle.getString("token");
 
-        String url = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Rangliste/" + noviIgrac.getIdDokumenta() + "?access_token=";
-        String dokument = "{\"fields\": { \"nazivKviza\": {\"stringValue\": \"" + noviIgrac.getNazivKviza() + "\"}," +
-                "\"lista\": {\"mapValue\": {\"fields\": { \"pozicija\": { \"integerValue\": \"" + noviIgrac.getPozicija() + "\"}, " +
-                "\"informacije\": {\"mapValue\": {\"fields\": {\"imeIgraca\": {\"stringValue\": \"" + noviIgrac.getImeIgraca() + "\"}," +
-                "\"procenatTacnih\": {\"doubleValue\": " + noviIgrac.getProcenatTacnih() + "}}}}}}}}}";
 
-        Intent intent = new Intent(Intent.ACTION_SYNC, null, getActivity(), GetRequestIntentService.class);
-        intent.putExtra("TOKEN", token);
-        intent.putExtra("akcija", GetRequestIntentService.AKCIJA_PATCH_IGRAC);
-        intent.putExtra("url", url);
-        intent.putExtra("dokument", dokument);
-        intent.putExtra("receiver", receiver);
-        getActivity().startService(intent);
+        if (!KvizoviAkt.isOnline) {
+            KvizoviAkt.getDatabaseHelper().dodajRangListItem(noviIgrac);
+            ucitajRangListuIzSQLite();
+        }
+        else {
+            String url = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Rangliste/" + noviIgrac.getIdDokumenta() + "?access_token=";
+            String dokument = "{\"fields\": { \"nazivKviza\": {\"stringValue\": \"" + noviIgrac.getNazivKviza() + "\"}," +
+                    "\"lista\": {\"mapValue\": {\"fields\": { \"pozicija\": { \"integerValue\": \"" + noviIgrac.getPozicija() + "\"}, " +
+                    "\"informacije\": {\"mapValue\": {\"fields\": {\"imeIgraca\": {\"stringValue\": \"" + noviIgrac.getImeIgraca() + "\"}," +
+                    "\"procenatTacnih\": {\"doubleValue\": " + noviIgrac.getProcenatTacnih() + "}}}}}}}}}";
+
+            Intent intent = new Intent(Intent.ACTION_SYNC, null, getActivity(), GetRequestIntentService.class);
+            intent.putExtra("TOKEN", token);
+            intent.putExtra("akcija", GetRequestIntentService.AKCIJA_PATCH_IGRAC);
+            intent.putExtra("url", url);
+            intent.putExtra("dokument", dokument);
+            intent.putExtra("receiver", receiver);
+            getActivity().startService(intent);
+        }
 
         return v;
     }
 
-    private void ucitajRangListu() {
+    private void ucitajRangListuIzSQLite() {
+        novaRangLista.clear();
+        novaRangLista.addAll(KvizoviAkt.getDatabaseHelper().dajRangListuZaKviz(noviIgrac.getNazivKviza()));
+
+        Collections.sort(novaRangLista, new Comparator<RangListaItem>() {
+            @Override
+            public int compare(RangListaItem o1, RangListaItem o2) {
+                return (int)(o2.getProcenatTacnih()*100.0 - o1.getProcenatTacnih()*100.0);
+            }
+        });
+
+        for (int i = 0; i<novaRangLista.size(); i++) {
+            if (novaRangLista.get(i).getPozicija() != i + 1) {
+                novaRangLista.get(i).setPozicija(i + 1);
+            }
+        }
+
+        adapter = new RangListaAdapter(v.getContext(), novaRangLista);
+        lista.setAdapter(adapter);
+        adapter.notifyDataSetChanged();
+    }
+
+    private void ucitajRangListuIzFirebasa() {
         Intent intent = new Intent(Intent.ACTION_SYNC, null, getActivity(), GetRequestIntentService.class);
         intent.putExtra("TOKEN", token);
         intent.putExtra("akcija", GetRequestIntentService.AKCIJA_RANGLISTE);
@@ -112,7 +142,7 @@ public class RangLista extends Fragment implements GetRequestResultReceiver.Rece
                 adapter.notifyDataSetChanged();
             }
             else if (resultCode == GetRequestIntentService.AKCIJA_PATCH_IGRAC) {
-                ucitajRangListu();
+                ucitajRangListuIzFirebasa();
             }
         }
     }
