@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
 import android.os.Handler;
 import android.provider.CalendarContract;
 import android.support.v4.app.ActivityCompat;
@@ -11,14 +12,13 @@ import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Spinner;
 
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -34,12 +34,13 @@ import ba.unsa.etf.rma.baza.AccessToken;
 import ba.unsa.etf.rma.baza.GetRequestIntentService;
 import ba.unsa.etf.rma.baza.GetRequestResultReceiver;
 import ba.unsa.etf.rma.baza.HttpPatchRequest;
+import ba.unsa.etf.rma.klase.ConnectionStateMonitor;
 import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.adapteri.KvizAdapter;
 import ba.unsa.etf.rma.klase.Pitanje;
 
-public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdListeFrag, GetRequestResultReceiver.Receiver {
+public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdListeFrag, GetRequestResultReceiver.Receiver, ConnectionStateMonitor.Network {
 
     public static final int BACK_FROM_DODAJ_KVIZ = 105;
     public static final int ADDED_KVIZ = 115;
@@ -67,13 +68,18 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
     private GetRequestResultReceiver receiver = null;
 
     private SQLiteDBHelper databaseHelper;
+    private boolean isOnline = false;
+    private ConnectionStateMonitor connectionStateMonitor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_kvizovi_akt);
 
-        //databaseHelper = new SQLiteDBHelper(this);
+        connectionStateMonitor = new ConnectionStateMonitor(this, (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE));
+        connectionStateMonitor.registerNetworkCallback();
+
+        databaseHelper = new SQLiteDBHelper(this);
 
         try {
             AccessToken accessToken = new AccessToken();
@@ -82,6 +88,8 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        Log.wtf("ovo zavrsilo", TOKEN );
 
         receiver = new GetRequestResultReceiver(new Handler());
         receiver.setReceiver(this);
@@ -138,6 +146,7 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
             dodajListenerNaSpinner();
             dodajListenerNaListu();
         }
+        Log.wtf("hm", "onCreate: ovo bi treblo prije");
     }
 
     @Override
@@ -186,10 +195,33 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
 
     public void azurirajPodatke(Kategorija odabrana) {
 
-        //if (!isOnline()) {
+        if (!isOnline) {
             // uzmi kvizove iz sqlite
-        //}
-        //else {
+            ArrayList<Kategorija> noveKategorije = new ArrayList<>();
+            ArrayList<Kviz> noviKvizovi          = new ArrayList<>();
+
+            Kategorija kategorijaSvi = new Kategorija("Svi", "-1");
+            kategorijaSvi.setIdDokumenta("SVIID");
+
+            kategorije.clear();
+            kategorije.add(kategorijaSvi);
+            kategorije.addAll(noveKategorije);
+
+            kvizovi.clear();
+            kvizovi.addAll(noviKvizovi);
+
+            if (dpwidth >= 550) {
+                listaFrag.azurirajKategorije(kategorije, kvizovi);
+                return;
+            }
+
+            kategorijaAdapter.notifyDataSetChanged();
+
+            kvizAdapter = new KvizAdapter(getBaseContext(), kvizovi);
+            listaKvizova.setAdapter(kvizAdapter);
+            kvizAdapter.notifyDataSetChanged();
+        }
+        else {
             Intent intent = new Intent(Intent.ACTION_SYNC, null, this, GetRequestIntentService.class);
             intent.putExtra("TOKEN", TOKEN);
 
@@ -201,20 +233,7 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
             }
             intent.putExtra("receiver", receiver);
             startService(intent);
-        //}
-    }
-
-    public boolean isOnline() {
-        try {
-            HttpURLConnection urlConnection = (HttpURLConnection) (new URL("http://clients3.google.com/generate_204").openConnection());
-            urlConnection.setRequestProperty("User-Agent", "Android");
-            urlConnection.setRequestProperty("Connection", "close");
-            urlConnection.setConnectTimeout(1500);
-            urlConnection.connect();
-            if (urlConnection.getResponseCode() == 204 && urlConnection.getContentLength() == 0)
-                return true;
-        } catch (Exception e) {}
-        return false;
+        }
     }
 
     private void izbaciAlert(String poruka) {
@@ -241,10 +260,10 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         elementZaDodavanje.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //if (!isOnline()) {
-                 //   izbaciAlert("Spojite se na internet da dodate kviz");
-                //}
-                //else
+                if (!isOnline) {
+                    izbaciAlert("Spojite se na internet da dodate kviz");
+                }
+                else
                     otvoriAktivnostZaDodavanjeKviza(null);
             }
         });
@@ -252,10 +271,10 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         elementZaDodavanje.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                //if (!isOnline()) {
-                  //  izbaciAlert("Spojite se na internet da dodate kviz");
-                //}
-                //else
+                if (!isOnline) {
+                    izbaciAlert("Spojite se na internet da dodate kviz");
+                }
+                else
                     otvoriAktivnostZaDodavanjeKviza(null);
                 return true;
             }
@@ -264,13 +283,13 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         listaKvizova.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> adapter, View arg1, int position, long id) {
-                //if (!isOnline()) {
-                  //  izbaciAlert("Spojite se na internet da uredite kviz");
-                //}
-                //else {
+                if (!isOnline) {
+                    izbaciAlert("Spojite se na internet da uredite kviz");
+                }
+                else {
                     Kviz odabraniKviz = (Kviz) adapter.getItemAtPosition(position);
                     otvoriAktivnostZaDodavanjeKviza(odabraniKviz);
-                //}
+                }
                 return true;
             }
         });
@@ -445,11 +464,32 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
     }
 
 
+
+    @Override
+    public void onNetworkLost() {
+        Log.wtf("Lejla", "network availableeeee");
+        isOnline = false;
+    }
+
+    @Override
+    public void onNetworkAvailable() {
+        Log.wtf("Lejla", "network availableeeee");
+        isOnline = true;
+    }
+
+
     // invoked when the activity may be temporarily destroyed, save the instance state here
     @Override
     public void onSaveInstanceState(Bundle outState) {
         outState.putSerializable("kvizovi", kvizovi);
         outState.putSerializable("kategorije", kategorije);
         super.onSaveInstanceState(outState);
+    }
+
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        connectionStateMonitor.unregisterNetworkCallback();
     }
 }
