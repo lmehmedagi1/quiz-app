@@ -271,15 +271,22 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         }
         else if (!isOnline) {
             // filtriranje kvizova bez interneta
+            ArrayList<Kviz> noviKvizovi = databaseHelper.dajSveKvizove();
             ArrayList<Kviz> azuriraniKvizovi = new ArrayList<>();
             if (odabrana.getNaziv().equals("Svi"))
-                azuriraniKvizovi.addAll(kvizovi);
+                azuriraniKvizovi.addAll(noviKvizovi);
             else {
-                for (Kviz k : kvizovi) {
+                for (Kviz k : noviKvizovi) {
                     if (k.getKategorija().getNaziv().equals(odabrana.getNaziv()))
                         azuriraniKvizovi.add(k);
                 }
             }
+
+            if (dpwidth >= 550) {
+                detailFrag.primiPorukuOdListeFrag(azuriraniKvizovi);
+                return;
+            }
+
             kvizAdapter = new KvizAdapter(getBaseContext(), azuriraniKvizovi);
             listaKvizova.setAdapter(kvizAdapter);
             kvizAdapter.notifyDataSetChanged();
@@ -300,7 +307,7 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         }
     }
 
-    private void izbaciAlert(String poruka) {
+    public void izbaciAlert(String poruka) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(poruka);
         builder.setNeutralButton("OK", null);
@@ -468,7 +475,7 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         kvizAdapter.notifyDataSetChanged();
     }
 
-    private String postojiDogadjaj(long vrijemeIgranjaKviza) {
+    public String postojiDogadjaj(long vrijemeIgranjaKviza) {
 
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_CALENDAR}, 420);
 
@@ -509,7 +516,7 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
                 info[1] = sdfDate.format(new Date(cursor.getLong(2)));
                 info[2] = sdfDate.format(new Date(cursor.getLong(3)));
 
-                String event = "Imate događaj:" + info[0] + "\n\n" +
+                String event = "Imate događaj " + info[0] + " u kalendaru\n\n" +
                         "Početak: " + info[1] + "\n" +
                         "Kraj: " + info[2] + "\n";
 

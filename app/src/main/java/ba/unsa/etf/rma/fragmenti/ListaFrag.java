@@ -42,7 +42,6 @@ public class ListaFrag extends Fragment {
         // Required empty public constructor
     }
 
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         if (container == null) return null;
@@ -52,6 +51,10 @@ public class ListaFrag extends Fragment {
 
         kategorije = new ArrayList<>();
 
+        kategorijaAdapter = new ArrayAdapter<Kategorija>(view.getContext(), android.R.layout.simple_list_item_1, kategorije);
+        listaKategorija.setAdapter(kategorijaAdapter);
+        dodajListenerNaListu();
+
         return view;
     }
 
@@ -59,10 +62,6 @@ public class ListaFrag extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         if (view == null) return;
-
-        kategorijaAdapter = new ArrayAdapter<Kategorija>(view.getContext(), android.R.layout.simple_list_item_1, kategorije);
-        listaKategorija.setAdapter(kategorijaAdapter);
-        dodajListenerNaListu();
 
         ((KvizoviAkt)getActivity()).azurirajPodatke(null);
     }
@@ -82,6 +81,8 @@ public class ListaFrag extends Fragment {
     public void azurirajKategorije(ArrayList<Kategorija> noveKategorije, ArrayList<Kviz> kvizovi) {
         kategorije.clear();
         kategorije.addAll(noveKategorije);
+        if (kategorijaAdapter == null)
+            return;
         kategorijaAdapter.notifyDataSetChanged();
         if (kvizovi != null)
             callback.porukaOdListeFrag(kvizovi);

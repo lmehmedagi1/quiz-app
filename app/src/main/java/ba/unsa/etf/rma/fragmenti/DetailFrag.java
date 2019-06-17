@@ -55,11 +55,22 @@ public class DetailFrag extends Fragment {
         gridKvizovi.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
                 Kviz odabraniKviz = (Kviz) parent.getItemAtPosition(position);
-                if (odabraniKviz.getNaziv().equals("Dodaj kviz"))
-                    ((KvizoviAkt)getActivity()).otvoriAktivnostZaDodavanjeKviza(null);
-                else
-                    ((KvizoviAkt)getActivity()).otvoriAktivnostZaIgranjeKviza(odabraniKviz);
+
+                if (odabraniKviz.getNaziv().equals("Dodaj kviz")) {
+                    if (!KvizoviAkt.isOnline)
+                        ((KvizoviAkt) getActivity()).izbaciAlert("Spojite se na internet da dodate kviz");
+                    else
+                        ((KvizoviAkt) getActivity()).otvoriAktivnostZaDodavanjeKviza(null);
+                }
+                else {
+                    String event = ((KvizoviAkt) getActivity()).postojiDogadjaj(odabraniKviz.getPitanja().size() * 30000);
+                    if (event == null)
+                        ((KvizoviAkt) getActivity()).otvoriAktivnostZaIgranjeKviza(odabraniKviz);
+                    else
+                        ((KvizoviAkt) getActivity()).izbaciAlert(event);
+                }
             }
         });
 
@@ -68,9 +79,16 @@ public class DetailFrag extends Fragment {
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 Kviz odabraniKviz = (Kviz) parent.getItemAtPosition(position);
                 if (odabraniKviz.getNaziv().equals("Dodaj kviz"))
-                    ((KvizoviAkt)getActivity()).otvoriAktivnostZaDodavanjeKviza(null);
-                else
-                    ((KvizoviAkt)getActivity()).otvoriAktivnostZaDodavanjeKviza(odabraniKviz);
+                    if (!KvizoviAkt.isOnline)
+                        ((KvizoviAkt) getActivity()).izbaciAlert("Spojite se na internet da dodate kviz");
+                    else
+                        ((KvizoviAkt) getActivity()).otvoriAktivnostZaDodavanjeKviza(null);
+                else {
+                    if (!KvizoviAkt.isOnline)
+                        ((KvizoviAkt) getActivity()).izbaciAlert("Spojite se na internet da uredite kviz");
+                    else
+                        ((KvizoviAkt) getActivity()).otvoriAktivnostZaDodavanjeKviza(odabraniKviz);
+                }
                 return true;
             }
         });
