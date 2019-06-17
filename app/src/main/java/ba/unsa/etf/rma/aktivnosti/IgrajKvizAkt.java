@@ -10,9 +10,12 @@ import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.ConnectivityManager;
 import android.net.Uri;
+import android.os.Build;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
+import android.widget.Toast;
 
 
 import java.util.Calendar;
@@ -104,15 +107,21 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
             }
         }
         else {
+
             alarmReceiver = new AlarmReceiver();
             this.registerReceiver(alarmReceiver, new IntentFilter("ba.unsa.etf.rma.aktivnosti.IgrajKvizAkt$AlarmReceiver"));
 
             Calendar time = Calendar.getInstance();
             AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
             Intent alarmIntent = new Intent("ba.unsa.etf.rma.aktivnosti.IgrajKvizAkt$AlarmReceiver");
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 15, alarmIntent, 0);
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, alarmIntent, 0);
 
-            alarmManager.setExact(AlarmManager.RTC_WAKEUP, time.getTimeInMillis() + kviz.getPitanja().size() * 30300, pendingIntent);
+            if (Build.VERSION.SDK_INT >= 19)
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, time.getTimeInMillis() + kviz.getPitanja().size() * 30000 + 200, pendingIntent);
+            else
+                alarmManager.set(AlarmManager.RTC_WAKEUP, time.getTimeInMillis() + kviz.getPitanja().size() * 30000 + 200, pendingIntent);
+
+            Toast.makeText(this, "Alarm navijen za " + kviz.getPitanja().size() * 30 + "s", Toast.LENGTH_SHORT).show();
 
             pitanjeFrag = (PitanjeFrag) manager.findFragmentByTag(PITANJE_TAG);
             if (pitanjeFrag == null) {
@@ -174,7 +183,7 @@ public class IgrajKvizAkt extends AppCompatActivity implements InformacijeFrag.p
     public void iskljuciAlarm() {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         Intent alarmIntent = new Intent("ba.unsa.etf.rma.aktivnosti.IgrajKvizAkt$AlarmReceiver");
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 15, alarmIntent, 0);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, alarmIntent, 0);
         alarmManager.cancel(pendingIntent);
     }
 

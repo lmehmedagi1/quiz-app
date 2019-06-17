@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -74,6 +75,7 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
 
     public SQLiteDBHelper(Context context) {
         super(context, IME_BAZE, null, VERZIJA_BAZE);
+        onCreate(this.getReadableDatabase());
     }
 
     @Override
@@ -155,6 +157,7 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery("select * from " + TABELA_KVIZOVI, null);
 
+        Log.wtf("eh cursor: ", String.valueOf(cursor.getCount()));
         if (cursor.moveToFirst()) {
 
             String idDokumenta = cursor.getString(cursor.getColumnIndex(KOL_DOKUMENT_ID));
@@ -194,6 +197,43 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
         db.close();
 
         return kategorije;
+    }
+
+    public ArrayList<RangListaItem> dajRangListe() {
+        ArrayList<RangListaItem> rangListe = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("select * from " + TABELA_RANG_LISTA, null);
+
+        if (cursor.moveToFirst()) {
+
+            String idDokumenta = cursor.getString(cursor.getColumnIndex(KOL_DOKUMENT_ID));
+            String imeIgraca = cursor.getString(cursor.getColumnIndex(KOL_IME_IGRACA));
+            String nazivKviza = cursor.getString(cursor.getColumnIndex(KOL_NAZIV_KVIZA));
+            float procenat = cursor.getFloat(cursor.getColumnIndex(KOL_PROCENAT));
+
+            RangListaItem rangListaItem = new RangListaItem(imeIgraca, nazivKviza, procenat, 1);
+            rangListaItem.setIdDokumenta(idDokumenta);
+
+            rangListe.add(rangListaItem);
+
+            while(cursor.moveToNext()){
+
+                idDokumenta = cursor.getString(cursor.getColumnIndex(KOL_DOKUMENT_ID));
+                imeIgraca = cursor.getString(cursor.getColumnIndex(KOL_IME_IGRACA));
+                nazivKviza = cursor.getString(cursor.getColumnIndex(KOL_NAZIV_KVIZA));
+                procenat = cursor.getFloat(cursor.getColumnIndex(KOL_PROCENAT));
+
+                rangListaItem = new RangListaItem(imeIgraca, nazivKviza, procenat, 1);
+                rangListaItem.setIdDokumenta(idDokumenta);
+
+                rangListe.add(rangListaItem);
+            }
+        }
+        if (cursor != null)
+            cursor.close();
+        db.close();
+
+        return rangListe;
     }
 
     public ArrayList<RangListaItem> dajRangListuZaKviz(String nazivKviza) {

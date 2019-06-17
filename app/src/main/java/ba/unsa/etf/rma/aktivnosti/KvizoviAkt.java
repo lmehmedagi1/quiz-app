@@ -78,6 +78,9 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_kvizovi_akt);
 
+        receiver = new GetRequestResultReceiver(new Handler());
+        receiver.setReceiver(this);
+
         connectionStateMonitor = new ConnectionStateMonitor(this, (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE));
         connectionStateMonitor.registerNetworkCallback();
 
@@ -90,9 +93,6 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        receiver = new GetRequestResultReceiver(new Handler());
-        receiver.setReceiver(this);
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -206,6 +206,35 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
 
                 for (RangListaItem r : noveRangListe)
                     databaseHelper.dodajRangListItem(r);
+
+                Kategorija kategorijaSvi = new Kategorija("Svi", "-1");
+                kategorijaSvi.setIdDokumenta("SVIID");
+
+                kategorije.clear();
+                kategorije.add(kategorijaSvi);
+                kategorije.addAll(noveKategorije);
+
+                kvizovi.clear();
+                kvizovi.addAll(noviKvizovi);
+
+                if (dpwidth >= 550) {
+                    listaFrag.azurirajKategorije(kategorije, kvizovi);
+                    return;
+                }
+
+                kategorijaAdapter.notifyDataSetChanged();
+
+                kvizAdapter = new KvizAdapter(getBaseContext(), kvizovi);
+                listaKvizova.setAdapter(kvizAdapter);
+                kvizAdapter.notifyDataSetChanged();
+            }
+            else if (resultCode == GetRequestIntentService.AKCIJA_SQLITE_POST) {
+                // ucitavamo podatke iz firebase u SQLite
+                Intent intent = new Intent(Intent.ACTION_SYNC, null, this, GetRequestIntentService.class);
+                intent.putExtra("TOKEN", TOKEN);
+                intent.putExtra("akcija", GetRequestIntentService.AKCIJA_SQLITE_GET);
+                intent.putExtra("receiver", receiver);
+                startService(intent);
             }
         }
     }
@@ -216,6 +245,8 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
             // pokretanje aplikacije bez interneta, uzmi sve kvizove iz bsze
             ArrayList<Kategorija> noveKategorije = databaseHelper.dajSveKategorije();
             ArrayList<Kviz> noviKvizovi          = databaseHelper.dajSveKvizove();
+
+            Log.wtf("novi kviz ima ovoliko kvizova", String.valueOf(noviKvizovi.size()) );
 
             Kategorija kategorijaSvi = new Kategorija("Svi", "-1");
             kategorijaSvi.setIdDokumenta("SVIID");
@@ -478,10 +509,9 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
                 info[1] = sdfDate.format(new Date(cursor.getLong(2)));
                 info[2] = sdfDate.format(new Date(cursor.getLong(3)));
 
-                String event = "Imate događaj:\n\n" +
-                        "Naziv: " + info[0] + "\n" +
-                        "Počinje: " + info[1] + "\n" +
-                        "Završava: " + info[2] + "\n";
+                String event = "Imate događaj:" + info[0] + "\n\n" +
+                        "Početak: " + info[1] + "\n" +
+                        "Kraj: " + info[2] + "\n";
 
                 cursor.close();
                 return event;
@@ -516,15 +546,20 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
             }
         }
 
+        isOnline = true;
 
+        // ucitati podatke o ranglistama iz SQLite u Firebase:
+        azurirajRangListuUFirebaseu();
+    }
+
+    public void azurirajRangListuUFirebaseu() {
+        ArrayList<RangListaItem> rangListaItems = databaseHelper.dajRangListe();
         Intent intent = new Intent(Intent.ACTION_SYNC, null, this, GetRequestIntentService.class);
         intent.putExtra("TOKEN", TOKEN);
-        intent.putExtra("akcija", GetRequestIntentService.AKCIJA_SQLITE_GET);
+        intent.putExtra("akcija", GetRequestIntentService.AKCIJA_SQLITE_POST);
         intent.putExtra("receiver", receiver);
+        intent.putExtra("rangListe", rangListaItems);
         startService(intent);
-
-
-        isOnline = true;
     }
 
     // invoked when the activity may be temporarily destroyed, save the instance state here

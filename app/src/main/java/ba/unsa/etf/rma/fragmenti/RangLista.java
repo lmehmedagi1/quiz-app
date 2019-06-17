@@ -54,9 +54,9 @@ public class RangLista extends Fragment implements GetRequestResultReceiver.Rece
 
         token = bundle.getString("token");
 
+        KvizoviAkt.getDatabaseHelper().dodajRangListItem(noviIgrac);
 
         if (!KvizoviAkt.isOnline) {
-            KvizoviAkt.getDatabaseHelper().dodajRangListItem(noviIgrac);
             ucitajRangListuIzSQLite();
         }
         else {

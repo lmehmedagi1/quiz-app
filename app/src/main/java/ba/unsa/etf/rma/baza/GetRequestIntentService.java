@@ -99,17 +99,44 @@ public class GetRequestIntentService extends IntentService {
     }
 
     private void akcijaSQLitePost(ResultReceiver receiver, Intent intent) throws Exception {
-        RangListaItem rangListaItem = (RangListaItem) intent.getSerializableExtra("ranglistaitem");
+        ArrayList<RangListaItem> rangLista = (ArrayList<RangListaItem>) intent.getSerializableExtra("rangListe");
 
-        urlString = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Rangliste/" + rangListaItem.getIdDokumenta() + "?access_token=";
-        url = new URL(urlString + URLEncoder.encode(token, "UTF-8"));
-        String upit = "{\"fields\": { \"nazivKviza\": {\"stringValue\": \"" + rangListaItem.getNazivKviza() + "\"}," +
-                "\"lista\": {\"mapValue\": {\"fields\": { \"pozicija\": { \"integerValue\": \"" + rangListaItem.getPozicija() + "\"}, " +
-                "\"informacije\": {\"mapValue\": {\"fields\": {\"imeIgraca\": {\"stringValue\": \"" + rangListaItem.getImeIgraca() + "\"}," +
-                "\"procenatTacnih\": {\"doubleValue\": " + rangListaItem.getProcenatTacnih() + "}}}}}}}}}";
+        for (RangListaItem r : rangLista) {
+            urlString = "https://firestore.googleapis.com/v1/projects/rma18174-firebase/databases/(default)/documents/Rangliste/" + r.getIdDokumenta() + "?access_token=";
+            url = new URL(urlString + URLEncoder.encode(token, "UTF-8"));
 
-        result = getResponse(upit, false);
-        bundle.putSerializable("ranglista", ucitajRangListu(result));
+            String dokument = "{\"fields\": { \"nazivKviza\": {\"stringValue\": \"" + r.getNazivKviza() + "\"}," +
+                    "\"lista\": {\"mapValue\": {\"fields\": { \"pozicija\": { \"integerValue\": \"" + r.getPozicija() + "\"}, " +
+                    "\"informacije\": {\"mapValue\": {\"fields\": {\"imeIgraca\": {\"stringValue\": \"" + r.getImeIgraca() + "\"}," +
+                    "\"procenatTacnih\": {\"doubleValue\": " + r.getProcenatTacnih() + "}}}}}}}}}";
+
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("PATCH");
+            connection.setDoOutput(true);
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("Accept", "application/json");
+
+
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = dokument.getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
+
+
+            InputStreamReader streamReader = new InputStreamReader(connection.getInputStream());
+            BufferedReader reader = new BufferedReader(streamReader);
+            StringBuilder stringBuilder = new StringBuilder();
+
+            String inputLine;
+            while((inputLine = reader.readLine()) != null) {
+                stringBuilder.append(inputLine.trim());
+                stringBuilder.append("\n");
+            }
+
+            reader.close();
+            streamReader.close();
+        }
+
         receiver.send(AKCIJA_SQLITE_POST, bundle);
     }
 
