@@ -5,7 +5,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -13,7 +12,6 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 
-import ba.unsa.etf.rma.fragmenti.RangLista;
 import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.klase.Kviz;
 import ba.unsa.etf.rma.klase.Pitanje;
@@ -157,16 +155,54 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery("select * from " + TABELA_KVIZOVI, null);
 
-        Log.wtf("eh cursor: ", String.valueOf(cursor.getCount()));
         if (cursor.moveToFirst()) {
 
+            String naziv = cursor.getString(cursor.getColumnIndex(KOL_NAZIV));
+            String idKategorije = cursor.getString(cursor.getColumnIndex(KOL_KATEGORIJA_ID_DOKUMENTA));
+            String jsonPitanja = cursor.getString(cursor.getColumnIndex(KOL_PITANJA));
             String idDokumenta = cursor.getString(cursor.getColumnIndex(KOL_DOKUMENT_ID));
-            kvizovi.add(dajKviz(idDokumenta));
+
+            Gson gson = new Gson();
+            Type type = new TypeToken<ArrayList<String>>() {}.getType();
+            ArrayList<String> pitanjaId = gson.fromJson(jsonPitanja, type);
+
+            ArrayList<Pitanje> pitanjaZaKviz = new ArrayList<>();
+
+            for (int i = 0; i<pitanjaId.size(); i++) {
+                Pitanje p = dajPitanje(pitanjaId.get(i));
+                pitanjaZaKviz.add(p);
+            }
+
+            Kategorija kategorija = dajKategoriju(idKategorije);
+
+            Kviz kviz = new Kviz(naziv, pitanjaZaKviz, kategorija);
+            kviz.setIdDokumenta(idDokumenta);
+            kvizovi.add(kviz);
 
             while(cursor.moveToNext()){
 
+                naziv = cursor.getString(cursor.getColumnIndex(KOL_NAZIV));
+                idKategorije = cursor.getString(cursor.getColumnIndex(KOL_KATEGORIJA_ID_DOKUMENTA));
+                jsonPitanja = cursor.getString(cursor.getColumnIndex(KOL_PITANJA));
                 idDokumenta = cursor.getString(cursor.getColumnIndex(KOL_DOKUMENT_ID));
-                kvizovi.add(dajKviz(idDokumenta));
+
+                gson = new Gson();
+                type = new TypeToken<ArrayList<String>>() {}.getType();
+                pitanjaId = gson.fromJson(jsonPitanja, type);
+
+                pitanjaZaKviz = new ArrayList<>();
+
+                for (int i = 0; i<pitanjaId.size(); i++) {
+                    Pitanje p = dajPitanje(pitanjaId.get(i));
+                    pitanjaZaKviz.add(p);
+                }
+
+                kategorija = dajKategoriju(idKategorije);
+
+                kviz = new Kviz(naziv, pitanjaZaKviz, kategorija);
+                kviz.setIdDokumenta(idDokumenta);
+                kvizovi.add(kviz);
+
             }
         }
         if (cursor != null)
@@ -183,13 +219,25 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
 
         if (cursor.moveToFirst()) {
 
+            String naziv = cursor.getString(cursor.getColumnIndex(KOL_NAZIV));
+            String ikonica = cursor.getString(cursor.getColumnIndex(KOL_ID_IKONICE));
             String idDokumenta = cursor.getString(cursor.getColumnIndex(KOL_DOKUMENT_ID));
-            kategorije.add(dajKategoriju(idDokumenta));
+
+            Kategorija kategorija = new Kategorija(naziv, ikonica);
+            kategorija.setIdDokumenta(idDokumenta);
+
+            kategorije.add(kategorija);
 
             while(cursor.moveToNext()){
 
+                naziv = cursor.getString(cursor.getColumnIndex(KOL_NAZIV));
+                ikonica = cursor.getString(cursor.getColumnIndex(KOL_ID_IKONICE));
                 idDokumenta = cursor.getString(cursor.getColumnIndex(KOL_DOKUMENT_ID));
-                kategorije.add(dajKategoriju(idDokumenta));
+
+                kategorija = new Kategorija(naziv, ikonica);
+                kategorija.setIdDokumenta(idDokumenta);
+
+                kategorije.add(kategorija);
             }
         }
         if (cursor != null)
@@ -274,47 +322,6 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
         return rangLista;
     }
 
-    public Kviz dajKviz(String idDokumenta) {
-        Kviz kviz = null;
-        Cursor cursor = null;
-        SQLiteDatabase db = this.getReadableDatabase();
-        String[] kolone = new String[]{KOL_NAZIV, KOL_PITANJA, KOL_KATEGORIJA_ID_DOKUMENTA};
-        String where = KOL_DOKUMENT_ID + "='" + idDokumenta + "'";
-        try {
-            cursor = db.query(TABELA_KVIZOVI, kolone, where, null, null, null, null);
-            if(cursor.getCount() > 0) {
-                cursor.moveToFirst();
-
-                String naziv = cursor.getString(cursor.getColumnIndex(KOL_NAZIV));
-                String idKategorije = cursor.getString(cursor.getColumnIndex(KOL_KATEGORIJA_ID_DOKUMENTA));
-                String jsonPitanja = cursor.getString(cursor.getColumnIndex(KOL_PITANJA));
-
-                Gson gson = new Gson();
-                Type type = new TypeToken<ArrayList<String>>() {}.getType();
-                ArrayList<String> pitanjaId = gson.fromJson(jsonPitanja, type);
-
-                ArrayList<Pitanje> pitanjaZaKviz = new ArrayList<>();
-
-                for (int i = 0; i<pitanjaId.size(); i++) {
-                    Pitanje p = dajPitanje(pitanjaId.get(i));
-                    pitanjaZaKviz.add(p);
-                }
-
-                Kategorija kategorija = dajKategoriju(idKategorije);
-
-                kviz = new Kviz(naziv, pitanjaZaKviz, kategorija);
-                kviz.setIdDokumenta(idDokumenta);
-            }
-        }
-        finally {
-            if (cursor != null)
-                cursor.close();
-            db.close();
-        }
-
-        return kviz;
-    }
-
     private Kategorija dajKategoriju(String idDokumenta) {
         Kategorija kategorija = null;
         Cursor cursor = null;
@@ -372,30 +379,5 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
         return pitanje;
     }
 
-    private RangListaItem dajRangListu(String idDokumenta) {
-        RangListaItem rangListaItem = null;
-        Cursor cursor = null;
-        SQLiteDatabase db = this.getReadableDatabase();
-        String[] kolone = new String[]{KOL_NAZIV_KVIZA, KOL_IME_IGRACA, KOL_PROCENAT};
-        String where = KOL_DOKUMENT_ID + "='" + idDokumenta + "'";
-        try {
-            cursor = db.query(TABELA_RANG_LISTA, kolone, where, null, null, null, null);
-            if(cursor.getCount() > 0) {
-                cursor.moveToFirst();
 
-                String nazivKviza = cursor.getString(cursor.getColumnIndex(KOL_NAZIV_KVIZA));
-                String imeIgraca = cursor.getString(cursor.getColumnIndex(KOL_IME_IGRACA));
-                Float procenat = cursor.getFloat(cursor.getColumnIndex(KOL_PROCENAT));
-
-                rangListaItem = new RangListaItem(imeIgraca, nazivKviza, procenat, 1);
-                rangListaItem.setIdDokumenta(idDokumenta);
-            }
-        }
-        finally {
-            if (cursor != null)
-                cursor.close();
-        }
-
-        return rangListaItem;
-    }
 }

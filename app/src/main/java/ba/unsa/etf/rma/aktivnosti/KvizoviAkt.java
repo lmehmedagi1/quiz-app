@@ -34,7 +34,6 @@ import ba.unsa.etf.rma.baza.AccessToken;
 import ba.unsa.etf.rma.baza.GetRequestIntentService;
 import ba.unsa.etf.rma.baza.GetRequestResultReceiver;
 import ba.unsa.etf.rma.baza.HttpPatchRequest;
-import ba.unsa.etf.rma.fragmenti.RangLista;
 import ba.unsa.etf.rma.klase.ConnectionStateMonitor;
 import ba.unsa.etf.rma.klase.Kategorija;
 import ba.unsa.etf.rma.klase.Kviz;
@@ -245,8 +244,6 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
             // pokretanje aplikacije bez interneta, uzmi sve kvizove iz bsze
             ArrayList<Kategorija> noveKategorije = databaseHelper.dajSveKategorije();
             ArrayList<Kviz> noviKvizovi          = databaseHelper.dajSveKvizove();
-
-            Log.wtf("novi kviz ima ovoliko kvizova", String.valueOf(noviKvizovi.size()) );
 
             Kategorija kategorijaSvi = new Kategorija("Svi", "-1");
             kategorijaSvi.setIdDokumenta("SVIID");
@@ -536,7 +533,6 @@ public class KvizoviAkt extends AppCompatActivity implements ListaFrag.porukaOdL
 
     @Override
     public void onNetworkLost() {
-        Log.wtf("Lejla", "network availableeeee");
         isOnline = false;
     }
 
