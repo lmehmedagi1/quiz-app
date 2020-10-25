@@ -5,7 +5,7 @@
 
 Quiz Mobile App is a mobile application for creating and playing quizzes.<br/>It can be used by multiple users in parallel and can work in online and offline mode. 
 
-Some relevant features include:
+Some relevant features include: 
   - Create quiz category
   - Create/Edit quiz
   - Add a quiz question
