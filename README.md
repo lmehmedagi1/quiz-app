@@ -23,13 +23,13 @@ You can download the debug APK file at: [Quiz App]
 <img src="screenshots/1.jpg" alt="Quiz overview" width="220"> <img src="screenshots/2.jpg" alt="Creating a category" width="220"> <img src="screenshots/3.jpg" alt="Creating/Editing a quiz" width="220">
 
 
-<img src="screenshots/4.jpg" alt="Adding questions" width="220"> <img src="screenshots/5.jpg" alt="Playing a quiz" width="220"> <img src="screenshots/6.jpg" alt="Ranking list" width="220">
+<img src="screenshots/4.jpg" alt="Adding questions" width="220"> <img src="screenshots/6.jpg" alt="Playing a quiz" width="220"> <img src="screenshots/7.jpg" alt="Ranking list" width="220">
 
 
-<img src="screenshots/7.jpg" alt="Adding questions" width="220"> <img src="screenshots/8.jpg" alt="Playing a quiz" width="220"> <img src="screenshots/9.jpg" alt="Ranking list" width="220">
+<img src="screenshots/8.jpg" alt="Adding questions" width="220"> <img src="screenshots/9.jpg" alt="Playing a quiz" width="220"> <img src="screenshots/10.jpg" alt="Ranking list" width="220">
 
 
-<img src="screenshots/10.jpg" alt="Adding questions" width="220"> <img src="screenshots/11.jpg" alt="Playing a quiz" width="220"> 
+<img src="screenshots/11.jpg" alt="Adding questions" width="220"> 
 
 ---
 
